@@ -24,6 +24,23 @@ print(dbi.conf('ww123_db'))
 # This gets us better error messages for certain common request errors
 app.config['TRAP_BAD_REQUEST_ERRORS'] = True
 
+def add_request(conn, sid, pid, status):
+    curs = dbi.cursor(conn)
+    curs.execute('''
+    insert into interests (pid, uid, status)
+    values (%s, %s, %s)
+    ''', [pid, sid, status])
+    conn.commit()
+    return
+
+def get_post(conn, pid):
+    '''getting post based on pid'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''
+        select * from posts
+        where pid=%s
+    ''',[pid])
+
 @app.route('/')
 def index():
     return render_template('main.html', page_title='Main Page')
@@ -64,7 +81,7 @@ def register():
             session['logged_in'] = True
             session['visits'] = 1
             return redirect( url_for('user', username=username) )
-        
+
 @app.route('/login/', methods=["POST"])
 def login():
     username = request.form.get('username', '').strip()
@@ -129,6 +146,29 @@ def logout():
     else:
         flash('you are not logged in. Please login or join')
         return redirect( url_for('index') )
+
+
+@app.route('post/<int:pid>/request', methods=['POST'])
+def make_request():
+    sid = session['uid']
+    if not sid:
+        flash('Please login first')
+        return render_template(url_for('login'))
+
+    conn = dbi.connect()
+    post = get_post(conn, pid) #whatever you use to find a post based on pid
+    if post is None:
+        flash("Post doesn't exist")
+        return render_template(url_for('index'))
+    if post['uid'] == sid:
+        flash("You can't request to your own post")
+    elif post['status'] not in ('Available', 'Open'):
+        flash('This post is not available')
+    else:
+        add_request(conn, sid, pid, 'Pending')
+        flash('request sent')
+    return render_template(url_for('post', pid=pid))
+
 
 if __name__ == '__main__':
     import sys, os
