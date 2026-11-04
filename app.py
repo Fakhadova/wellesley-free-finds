@@ -67,7 +67,7 @@ def register():
     with dbi.connect() as conn:
         with dbi.cursor(conn) as curs:
             try:
-                curs.execute('''INSERT INTO userpass(uid,username,password_hash)
+                curs.execute('''INSERT INTO user(uid,username,password_hash)
                                 VALUES(null,%s,%s)''',
                                 [username, hashed])
                 conn.commit()
@@ -95,7 +95,7 @@ def login():
     with dbi.connect() as conn:
         with dbi.dict_cursor(conn) as curs:
             curs.execute('''SELECT uid,password_hash
-                            FROM userpass
+                            FROM user
                             WHERE username = %s''',
                             [username])
             row = curs.fetchone()
