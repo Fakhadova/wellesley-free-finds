@@ -30,7 +30,7 @@ def index():
 
 @app.route('/register/', methods=["POST"])
 def register():
-    username = request.form.get('username').strip()
+    username = request.form.get('username', '').strip()
     passwd1 = request.form.get('password1')
     passwd2 = request.form.get('password2')
     if username == '':
@@ -50,7 +50,7 @@ def register():
     with dbi.connect() as conn:
         with dbi.cursor(conn) as curs:
             try:
-                curs.execute('''INSERT INTO user(uid,username,password_hash)
+                curs.execute('''INSERT INTO users(uid,username,password_hash)
                                 VALUES(null,%s,%s)''',
                                 [username, hashed])
                 conn.commit()
@@ -73,7 +73,7 @@ def login():
     with dbi.connect() as conn:
         with dbi.dict_cursor(conn) as curs:
             curs.execute('''SELECT uid,password_hash
-                            FROM user
+                            FROM users
                             WHERE username = %s''',
                             [username])
             row = curs.fetchone()
@@ -93,7 +93,7 @@ def login():
                 session['logged_in'] = True
                 session['visits'] = 1
                 if new_hash is not None:
-                    curs.execute('''update userpass set password_hash = %s where uid = %s''',
+                    curs.execute('''update users set password_hash = %s where uid = %s''',
                                  [new_hash, row['uid']])
                     conn.commit()
                 # all done; go to user's page
