@@ -19,7 +19,7 @@ app.secret_key = secrets.token_hex()
 # For CRUD and Ajax, use your personal db
 # For project work, use your team db
 
-print(dbi.conf('ww123_db'))
+print(dbi.conf('fahama_db'))
 
 # This gets us better error messages for certain common request errors
 app.config['TRAP_BAD_REQUEST_ERRORS'] = True
@@ -63,7 +63,7 @@ def register():
             session['uid'] = uid
             session['logged_in'] = True
             session['visits'] = 1
-            return redirect( url_for('user', username=username) )
+            return redirect(url_for('index'))
         
 @app.route('/login/', methods=["POST"])
 def login():
@@ -97,7 +97,7 @@ def login():
                                  [new_hash, row['uid']])
                     conn.commit()
                 # all done; go to user's page
-                return redirect( url_for('user', username=username) )
+                return redirect(url_for('index'))
             else:
                 flash('login incorrect. Try again or register')
                 return redirect( url_for('index'))
