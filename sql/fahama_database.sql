@@ -1,4 +1,4 @@
-/*M!999999\- enable the sandbox mode */ 
+/*M!999999\- enable the sandbox mode */
 -- MariaDB dump 10.19  Distrib 10.11.18-MariaDB, for Linux (x86_64)
 --
 -- Host: localhost    Database: fahama_db
@@ -242,6 +242,7 @@ CREATE TABLE `users` (
   `uid` int(11) NOT NULL AUTO_INCREMENT,
   `username` varchar(20) NOT NULL,
   `email` varchar(50) DEFAULT NULL,
+  `password_hash` varchar(255) not null,
   PRIMARY KEY (`uid`),
   UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
