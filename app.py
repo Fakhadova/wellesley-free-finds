@@ -102,22 +102,22 @@ def login():
                 flash('login incorrect. Try again or register')
                 return redirect( url_for('index'))
 
-@app.route('/user/<username>')
-def user(username):
+#@app.route('/user/<username>')
+#def user(username):
     # don't trust the URL; it's only there for decoration
     # it could just as easily be omitted
-    if 'username' in session:
-        username = session['username']
-        uid = session['uid']
-        session['visits'] = 1+int(session.get('visits',0))
-        return render_template('greet.html',
-                               page_title=f'My App: Welcome {username}',
-                               name=username,
-                               uid=uid,
-                               visits=session['visits'])
-    else:
-        flash('you are not logged in. Please login or join')
-        return redirect( url_for('index') )
+ #   if 'username' in session:
+  #      username = session['username']
+   #     uid = session['uid']
+    #    session['visits'] = 1+int(session.get('visits',0))
+     #   return render_template('greet.html',
+      #                         page_title=f'My App: Welcome {username}',
+       #                        name=username,
+        #                       uid=uid,
+         #                      visits=session['visits'])
+    #else:
+     #   flash('you are not logged in. Please login or join')
+      #  return redirect( url_for('index') )
 
 @app.route('/logout/', methods=['POST'])
 def logout():
