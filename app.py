@@ -130,11 +130,6 @@ def logout():
         flash('you are not logged in. Please login or join')
         return redirect( url_for('index') )
 
-@app.route('/about/')
-def about():
-    flash('this is a flashed message')
-    return render_template('about.html', page_title='About Us')
-
 if __name__ == '__main__':
     import sys, os
     if len(sys.argv) > 1:
