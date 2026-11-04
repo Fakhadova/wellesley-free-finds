@@ -19,7 +19,7 @@ app.secret_key = secrets.token_hex()
 # For CRUD and Ajax, use your personal db
 # For project work, use your team db
 
-print(dbi.conf('ww123_db'))
+print(dbi.conf('fahama_db'))
 
 # This gets us better error messages for certain common request errors
 app.config['TRAP_BAD_REQUEST_ERRORS'] = True
@@ -80,8 +80,13 @@ def register():
             session['uid'] = uid
             session['logged_in'] = True
             session['visits'] = 1
+<<<<<<< HEAD
             return redirect( url_for('user', username=username) )
 
+=======
+            return redirect(url_for('index'))
+        
+>>>>>>> 3f1af5467c25d8707c86dc215313de5948a1889d
 @app.route('/login/', methods=["POST"])
 def login():
     username = request.form.get('username', '').strip()
@@ -114,27 +119,27 @@ def login():
                                  [new_hash, row['uid']])
                     conn.commit()
                 # all done; go to user's page
-                return redirect( url_for('user', username=username) )
+                return redirect(url_for('index'))
             else:
                 flash('login incorrect. Try again or register')
                 return redirect( url_for('index'))
 
-@app.route('/user/<username>')
-def user(username):
+#@app.route('/user/<username>')
+#def user(username):
     # don't trust the URL; it's only there for decoration
     # it could just as easily be omitted
-    if 'username' in session:
-        username = session['username']
-        uid = session['uid']
-        session['visits'] = 1+int(session.get('visits',0))
-        return render_template('greet.html',
-                               page_title=f'My App: Welcome {username}',
-                               name=username,
-                               uid=uid,
-                               visits=session['visits'])
-    else:
-        flash('you are not logged in. Please login or join')
-        return redirect( url_for('index') )
+ #   if 'username' in session:
+  #      username = session['username']
+   #     uid = session['uid']
+    #    session['visits'] = 1+int(session.get('visits',0))
+     #   return render_template('greet.html',
+      #                         page_title=f'My App: Welcome {username}',
+       #                        name=username,
+        #                       uid=uid,
+         #                      visits=session['visits'])
+    #else:
+     #   flash('you are not logged in. Please login or join')
+      #  return redirect( url_for('index') )
 
 @app.route('/logout/', methods=['POST'])
 def logout():
