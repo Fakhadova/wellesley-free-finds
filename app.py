@@ -40,6 +40,7 @@ def get_post(conn, pid):
         select * from posts
         where pid=%s
     ''',[pid])
+    return curs.fetchone()
 
 @app.route('/')
 def index():
@@ -80,13 +81,8 @@ def register():
             session['uid'] = uid
             session['logged_in'] = True
             session['visits'] = 1
-<<<<<<< HEAD
-            return redirect( url_for('user', username=username) )
-
-=======
             return redirect(url_for('index'))
-        
->>>>>>> 3f1af5467c25d8707c86dc215313de5948a1889d
+
 @app.route('/login/', methods=["POST"])
 def login():
     username = request.form.get('username', '').strip()
@@ -153,9 +149,9 @@ def logout():
         return redirect( url_for('index') )
 
 
-@app.route('post/<int:pid>/request', methods=['POST'])
-def make_request():
-    sid = session['uid']
+@app.route('post/<int:pid>/request/', methods=['POST'])
+def make_request(pid):
+    sid = session.get('uid')
     if not sid:
         flash('Please login first')
         return render_template(url_for('login'))
