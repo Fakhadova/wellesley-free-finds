@@ -14,11 +14,6 @@ from pwd_context import hash_password, verify_password
 app.secret_key = secrets.token_hex()
 
 # configure DBI
-
-# For Lookup, use 'wmdb'
-# For CRUD and Ajax, use your personal db
-# For project work, use your team db
-
 print(dbi.conf('fahama_db'))
 
 # This gets us better error messages for certain common request errors
@@ -149,7 +144,7 @@ def logout():
         return redirect( url_for('index') )
 
 
-@app.route('post/<int:pid>/request/', methods=['POST'])
+@app.route('/post/<int:pid>/request/', methods=['POST'])
 def make_request(pid):
     sid = session.get('uid')
     if not sid:
