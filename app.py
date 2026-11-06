@@ -125,7 +125,11 @@ def logout():
 
 
 @app.route('/post/<int:pid>/cancel/', methods=['POST'])
+<<<<<<< HEAD
 def cancell_request(pid):
+=======
+def cancel_request(pid):
+>>>>>>> b52e13b02f59c172dd742c04b25f2f9c5dfcef48
     uid = session.get('uid')
     if not sid:
         flash('please login first')
