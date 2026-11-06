@@ -13,29 +13,9 @@ from pwd_context import hash_password, verify_password
 # we need a secret_key to use flash() and sessions
 app.secret_key = secrets.token_hex()
 
-# configure DBI
-print(dbi.conf('fahama_db'))
-
 # This gets us better error messages for certain common request errors
 app.config['TRAP_BAD_REQUEST_ERRORS'] = True
 
-def add_request(conn, sid, pid, status):
-    curs = dbi.cursor(conn)
-    curs.execute('''
-    insert into interests (pid, uid, status)
-    values (%s, %s, %s)
-    ''', [pid, sid, status])
-    conn.commit()
-    return
-
-def get_post(conn, pid):
-    '''getting post based on pid'''
-    curs = dbi.dict_cursor(conn)
-    curs.execute('''
-        select * from posts
-        where pid=%s
-    ''',[pid])
-    return curs.fetchone()
 
 @app.route('/')
 def index():
@@ -145,6 +125,22 @@ def logout():
 
 
 @app.route('/post/<int:pid>/request/', methods=['POST'])
+def cancell_request(pid):
+    sid = session.get('uid')
+    if not sid:
+        flash('please login first')
+        return render_template(url_for('login'))
+
+    conn = dbi.connect()
+    post = get_pos(conn, pid)
+
+    if post is None:
+        flash("Post doesn't exist")
+        return render_template(url_for('index'))
+    if post['uid'] == sid:
+        flash("You can't cancel request to your own post")
+
+    
 def make_request(pid):
     sid = session.get('uid')
     if not sid:
@@ -165,6 +161,7 @@ def make_request(pid):
         flash('request sent')
     return render_template(url_for('post', pid=pid))
 
+@app.route()
 
 if __name__ == '__main__':
     import sys, os
