@@ -26,7 +26,6 @@ def get_post(conn, pid):
     ''',[pid])
     return curs.fetchone()
 
-<<<<<<< HEAD
 def get_interest(conn, pid, uid):
     '''getting post request based on iid'''
     curs = dbi.dict_cursor(conn)
@@ -48,7 +47,6 @@ def withdraw_interest(conn, iid):
 
 def change_post_status(conn, pid, status):
     
-=======
 def add_donate_post(conn, sid, pid, title, description, category, photo_filename, status):
     '''adding donate post when user wants to donate an item'''
     #The initial status for a donate post should be Available
@@ -75,4 +73,3 @@ def add_request_post(conn, sid, pid, title, description, category, photo_filenam
     return
 
 
->>>>>>> 6afbae639e83f37cfff7c82738c948dd4a6ada2b
