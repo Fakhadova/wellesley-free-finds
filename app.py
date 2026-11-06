@@ -13,9 +13,6 @@ from pwd_context import hash_password, verify_password
 # we need a secret_key to use flash() and sessions
 app.secret_key = secrets.token_hex()
 
-# configure DBI
-print(dbi.conf('fahama_db'))
-
 # This gets us better error messages for certain common request errors
 app.config['TRAP_BAD_REQUEST_ERRORS'] = True
 
