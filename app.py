@@ -124,15 +124,9 @@ def logout():
         return redirect( url_for('index') )
 
 
-<<<<<<< HEAD
 @app.route('/post/<int:pid>/cancel/', methods=['POST'])
 def cancell_request(pid):
     uid = session.get('uid')
-=======
-@app.route('/post/<int:pid>/request/', methods=['POST'])
-def cancel_request(pid):
-    sid = session.get('uid')
->>>>>>> 6afbae639e83f37cfff7c82738c948dd4a6ada2b
     if not sid:
         flash('please login first')
         return redirect(url_for('login'))
@@ -177,20 +171,20 @@ def make_request(pid):
 
 @app.route('/profile/<username>')
 # Profile (Team Member 1): Display the current user's Donate and Request posts in Profile.
-def profile(username): 
-    if 'username' not in session or session['username'] != username: 
+def profile(username):
+    if 'username' not in session or session['username'] != username:
         flash('You are not authorized to view this profile.')
         return redirect(url_for('index'))
     uid = session['uid']
-    
-    # Fetch the user's donate and request posts from the database 
-    with dbi.connect() as conn: 
-        with dbi.dict_cursor(conn) as curs: 
+
+    # Fetch the user's donate and request posts from the database
+    with dbi.connect() as conn:
+        with dbi.dict_cursor(conn) as curs:
             curs.execute('''SELECT * FROM posts WHERE uid = %s''', [uid])
             posts = curs.fetchall()
-    
+
     return render_template('profile.html', page_title = f"{username}'s Profile", posts = posts)
-    
+
 
 if __name__ == '__main__':
     import sys, os
