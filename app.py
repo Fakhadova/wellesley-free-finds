@@ -124,9 +124,9 @@ def logout():
         return redirect( url_for('index') )
 
 
-@app.route('/post/<int:pid>/request/', methods=['POST'])
+@app.route('/post/<int:pid>/cancel/', methods=['POST'])
 def cancell_request(pid):
-    sid = session.get('uid')
+    uid = session.get('uid')
     if not sid:
         flash('please login first')
         return render_template(url_for('login'))
@@ -140,7 +140,14 @@ def cancell_request(pid):
     if post['uid'] == sid:
         flash("You can't cancel request to your own post")
 
-    
+    interest = get_interest(conn, pid, uid)
+    if interest is None or interest['status'] not in ('Pending', 'Accepted'):
+        flash("You have not made a request")
+        return render_template(url_for('post'), pid=pid)
+
+    withdraw_interest(conn, interest['iid'])
+
+
 def make_request(pid):
     sid = session.get('uid')
     if not sid:
