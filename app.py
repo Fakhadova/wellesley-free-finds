@@ -19,23 +19,6 @@ print(dbi.conf('fahama_db'))
 # This gets us better error messages for certain common request errors
 app.config['TRAP_BAD_REQUEST_ERRORS'] = True
 
-def add_request(conn, sid, pid, status):
-    curs = dbi.cursor(conn)
-    curs.execute('''
-    insert into interests (pid, uid, status)
-    values (%s, %s, %s)
-    ''', [pid, sid, status])
-    conn.commit()
-    return
-
-def get_post(conn, pid):
-    '''getting post based on pid'''
-    curs = dbi.dict_cursor(conn)
-    curs.execute('''
-        select * from posts
-        where pid=%s
-    ''',[pid])
-    return curs.fetchone()
 
 @app.route('/')
 def index():
