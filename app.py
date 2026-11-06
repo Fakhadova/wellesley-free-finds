@@ -56,7 +56,7 @@ def register():
             session['uid'] = uid
             session['logged_in'] = True
             session['visits'] = 1
-            return redirect( url_for('user', username=username) )
+            return redirect(url_for('user', username=username) )
 
 @app.route('/login/', methods=["POST"])
 def login():
@@ -95,22 +95,22 @@ def login():
                 flash('login incorrect. Try again or register')
                 return redirect( url_for('index'))
 
-#@app.route('/user/<username>')
-#def user(username):
+@app.route('/user/<username>')
+def user(username):
     # don't trust the URL; it's only there for decoration
     # it could just as easily be omitted
- #   if 'username' in session:
-  #      username = session['username']
-   #     uid = session['uid']
-    #    session['visits'] = 1+int(session.get('visits',0))
-     #   return render_template('greet.html',
-      #                         page_title=f'My App: Welcome {username}',
-       #                        name=username,
-        #                       uid=uid,
-         #                      visits=session['visits'])
-    #else:
-     #   flash('you are not logged in. Please login or join')
-      #  return redirect( url_for('index') )
+    if 'username' in session:
+        username = session['username']
+        uid = session['uid']
+        session['visits'] = 1+int(session.get('visits',0))
+        return render_template('greet.html',
+                               page_title=f'My App: Welcome {username}',
+                               name=username,
+                               uid=uid,
+                               visits=session['visits'])
+    else:
+        flash('you are not logged in. Please login or join')
+        return redirect( url_for('index') )
 
 @app.route('/logout/', methods=['POST'])
 def logout():
@@ -125,18 +125,18 @@ def logout():
 
 
 @app.route('/post/<int:pid>/request/', methods=['POST'])
-def cancell_request(pid):
+def cancel_request(pid):
     sid = session.get('uid')
     if not sid:
         flash('please login first')
-        return render_template(url_for('login'))
+        return redirect(url_for('login'))
 
     conn = dbi.connect()
-    post = get_pos(conn, pid)
+    post = get_post(conn, pid)
 
     if post is None:
         flash("Post doesn't exist")
-        return render_template(url_for('index'))
+        return redirect(url_for('index'))
     if post['uid'] == sid:
         flash("You can't cancel request to your own post")
 
@@ -145,13 +145,13 @@ def make_request(pid):
     sid = session.get('uid')
     if not sid:
         flash('Please login first')
-        return render_template(url_for('login'))
+        return redirect(url_for('login'))
 
     conn = dbi.connect()
     post = get_post(conn, pid) #whatever you use to find a post based on pid
     if post is None:
         flash("Post doesn't exist")
-        return render_template(url_for('index'))
+        return redirect(url_for('index'))
     if post['uid'] == sid:
         flash("You can't request to your own post")
     elif post['status'] not in ('Available', 'Open'):
@@ -159,9 +159,25 @@ def make_request(pid):
     else:
         add_request(conn, sid, pid, 'Pending')
         flash('request sent')
-    return render_template(url_for('post', pid=pid))
+    return redirect(url_for('post', pid=pid))
 
-@app.route()
+
+@app.route('/profile/<username>')
+# Profile (Team Member 1): Display the current user's Donate and Request posts in Profile.
+def profile(username): 
+    if 'username' not in session or session['username'] != username: 
+        flash('You are not authorized to view this profile.')
+        return redirect(url_for('index'))
+    uid = session['uid']
+    
+    # Fetch the user's donate and request posts from the database 
+    with dbi.connect() as conn: 
+        with dbi.dict_cursor(conn) as curs: 
+            curs.execute('''SELECT * FROM posts WHERE uid = %s''', [uid])
+            posts = curs.fetchall()
+    
+    return render_template('profile.html', page_title = f"{username}'s Profile", posts = posts)
+    
 
 if __name__ == '__main__':
     import sys, os
