@@ -1,11 +1,7 @@
 #This file contains functions interacting with the database
 import cs304dbi as dbi
 
-#TO:DOs:
-#Donate Listings (Team Member 2): Allow students to create Donate posts with an item name, description, one or more categories, and required photo. Store posts with an initial status of Available and display them on Home and individual post-detail pages.
-#Request Posts (Team Member 2): Allow students to create Request posts with an item name, description, one or more categories, and optional photo. Store posts with an initial status of Open and display them in a separate section of Home.
-
-print(dbi.conf('fahama_db'))
+dbi.conf('fahama_db')
 
 def add_request(conn, sid, pid, status):
     curs = dbi.cursor(conn)
@@ -46,30 +42,62 @@ def withdraw_interest(conn, iid):
     return
 
 def change_post_status(conn, pid, status):
-    
-def add_donate_post(conn, sid, pid, title, description, category, photo_filename, status):
-    '''adding donate post when user wants to donate an item'''
-    #The initial status for a donate post should be Available
-    status = 'Available'
-    curs = dbi.cursor(conn)
+    pass
+
+
+
+#Code for donate listings & request posts 
+#making global variables to make life easier and to match it with the db
+CATEGORIES={
+    'Clothing_Shoes': 'Clothing/Shoes',
+    'School_Supplies': 'School Supplies',
+    'Kitchenware': 'Kitchenware',
+    'Books': 'Books',
+    'Technology': 'Technology',
+    'Decorations_Furniture': 'Decorations/Furniture',
+    'Tools_Sporting_Goods': 'Tools/Sporting Goods',
+    'Miscellaneous': 'Miscellaneous',
+}
+
+#the starting statuses
+INITIAL_STATUS = {'Donate':'Available','Request':'Open'}
+#the statuses that are archived and hidden from Home
+ARCHIVED_STATUSES = ('Completed','Fulfilled')
+def add_post(conn, uid, post_type, title, description, categories, photo_filename=None):
+    '''inserts a new post (donate or request) and returns the pid'''
+    curs=dbi.cursor(conn)
     curs.execute('''
-    insert into posts (pid, uid, post_type, title, description, category, photo_filename, status, is_deleted, posted_at)
-    values (%s, %s, 'Donate', %s, %s, %s, %s, %s, 0, NOW())
-    ''', [pid, sid, title, description, category, photo_filename, status])
+        insert into posts (uid, post_type, title, description, category,
+                           photo_filename, status, is_deleted, posted_at)
+        values (%s, %s, %s, %s, %s, %s, %s, 0, now())
+    ''', [uid, post_type, title, description, ','.join(categories),
+          photo_filename, INITIAL_STATUS[post_type]])
     conn.commit()
-    return
+    return curs.lastrowid
 
-
-def add_request_post(conn, sid, pid, title, description, category, photo_filename, status):
-    '''adding request post when user wants to request an item'''
-    #The initial status for a request post should be Open
-    status = 'Open'
-    curs = dbi.cursor(conn)
+def get_active_posts(conn):
+    '''this is for the posts shown in home, newest first and excludes deleted and archived posts'''
+    curs=dbi.dict_cursor(conn)
     curs.execute('''
-    insert into posts (pid, uid, post_type, title, description, category, photo_filename, status, is_deleted, posted_at)
-    values (%s, %s, 'Request', %s, %s, %s, %s, %s, 0, NOW())
-    ''', [pid, sid, title, description, category, photo_filename, status])
-    conn.commit()
-    return
+        select p.pid, p.uid, u.username, p.post_type, p.title,
+               p.description, p.category, p.photo_filename, p.status,
+               p.posted_at
+        from posts p join users u using (uid)
+        where p.is_deleted = 0 and p.status not in (%s, %s)
+        order by p.posted_at desc
+    ''', list(ARCHIVED_STATUSES))
+    donate=[]
+    request=[]
+    for post in curs.fetchall():
+        (donate if post['post_type']=='Donate' else request).append(post)
+    return donate, request
 
-
+def get_post_details(conn, pid):
+    '''returns a non-deleted post with its author's username, im assuming we need this later'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''
+        select p.*, u.username
+        from posts p join users u using (uid)
+        where p.pid = %s and p.is_deleted = 0
+    ''', [pid])
+    return curs.fetchone()

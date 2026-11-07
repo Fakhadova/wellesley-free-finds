@@ -9,6 +9,8 @@ import secrets
 app.secret_key = secrets.token_hex()
 
 from pwd_context import hash_password, verify_password
+from werkzeug.utils import secure_filename
+from query import *   #helper functions
 
 # we need a secret_key to use flash() and sessions
 app.secret_key = secrets.token_hex()
@@ -16,10 +18,19 @@ app.secret_key = secrets.token_hex()
 # This gets us better error messages for certain common request errors
 app.config['TRAP_BAD_REQUEST_ERRORS'] = True
 
+#photo uploads for posts
+app.config['UPLOADS']=os.path.join(app.root_path, 'uploads')
+app.config['MAX_CONTENT_LENGTH']=5 * 1024 * 1024 
+os.makedirs(app.config['UPLOADS'],exist_ok=True)
+
 
 @app.route('/')
 def index():
-    return render_template('main.html', page_title='Main Page')
+    with dbi.connect() as conn:
+        donate_posts,request_posts=get_active_posts(conn) #shows posts on the front page
+    return render_template('main.html', page_title='Main Page',
+                           donate_posts=donate_posts,
+                           request_posts=request_posts)
 
 @app.route('/register/', methods=["POST"])
 def register():
@@ -185,6 +196,95 @@ def profile(username):
     
     return render_template('profile.html', page_title = f"{username}'s Profile", posts = posts)
     
+
+# Donate Listings & Request Posts Code
+ALLOWED_PHOTO_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+
+@app.template_filter('category_labels')
+def category_labels(category_set):
+    """turning our db volumns to display labels"""
+    return [CATEGORIES.get(c,c) for c in category_set.split(',') if c]
+
+
+@app.errorhandler(413) #we need to check if this works
+def photo_too_large(err):
+    flash('That photo is too large (max 5 MB).')
+    return redirect(url_for('post'))
+
+
+def save_photo(file):
+    """this saves an uploaded photo under a random name and returns the filename or returns none"""
+    if file is None or file.filename=='':
+        return None
+    ext=file.filename.rsplit('.', 1)[-1].lower()
+    if '.' not in file.filename or ext not in ALLOWED_PHOTO_EXTENSIONS:
+        raise ValueError('Photo must be a JPG, PNG, GIF, or WEBP image.')
+    filename=secure_filename(f'{secrets.token_hex(8)}.{ext}')
+    file.save(os.path.join(app.config['UPLOADS'], filename))
+    return filename
+
+
+@app.route('/post/', methods=['GET', 'POST'])
+def post():
+    """page to create a donate or request post"""
+    uid=session.get('uid')
+    if not uid:
+        flash('Please log in to create a post.')
+        return redirect(url_for('index'))
+    if request.method=='GET':
+        return render_template('create_post.html', page_title='Create a Post', #I WILL CREATE THIS HTMLS SOON <3
+                               categories=CATEGORIES, form={})
+    form=request.form
+    post_type=form.get('post_type') #getting whether its a donate or request
+    title=form.get('title', '').strip()
+    description=form.get('description', '').strip()
+    categories=[c for c in form.getlist('category') if c in CATEGORIES]
+    photo=request.files.get('photo')
+    errors = [] #copilot randomly added these so we have to check but they seem to be used for form validation
+    if post_type not in INITIAL_STATUS:
+        errors.append('Choose Donate or Request.')
+    if not title or len(title) > 100:
+        errors.append('Item name is required (max 100 characters).')
+    if not description or len(description) > 500:
+        errors.append('Description is required (max 500 characters).')
+    if not categories:
+        errors.append('Choose at least one category.')
+    if post_type == 'Donate' and (photo is None or photo.filename == ''):
+        errors.append('Donate posts require a photo.')
+    photo_filename=None
+    if not errors:
+        try:
+            photo_filename=save_photo(photo)
+        except ValueError as err:
+            errors.append(str(err))
+    if errors:
+        for e in errors:
+            flash(e)
+        #we rerender the create post page so they can try again
+        return render_template('create_post.html', page_title='Create a Post',
+                               categories=CATEGORIES, form=form,
+                               chosen=categories)
+    with dbi.connect() as conn:
+        pid=add_post(conn, uid, post_type, title, description, #now we add the post and it will return the pid
+                       categories, photo_filename)
+    flash(f'Your {post_type.lower()} post was created!')
+    return redirect(url_for('post_detail', pid=pid)) #i'm thinking like in the movies, we redirect to their new post page
+
+
+@app.route('/post/<int:pid>/')
+def post_detail(pid):
+    """shows a single post"""
+    with dbi.connect() as conn:
+        p = get_post_details(conn, pid)
+    if p is None:
+        flash("That post doesn't exist.")
+        return redirect(url_for('index'))
+    return render_template('post_detail.html', page_title=p['title'], post=p) #I WILL CREATE THIS HTMLLLL
+
+
+@app.route('/uploads/<path:filename>')
+def uploaded_photo(filename):
+    return send_from_directory(app.config['UPLOADS'], filename) #shows photo like in our exercise
 
 if __name__ == '__main__':
     import sys, os
