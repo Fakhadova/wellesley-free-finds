@@ -185,8 +185,18 @@ def cancell_request(pid):
         flash("Your request was withdrawn")
         return render_template(url_for('post'), pid=pid)
 
-#@app.route('/')#what is the endpoint of this?
-#def accept_request(iid):
+@app.route('/profile/request_list/<int:iid>')#what is the endpoint of this?
+def accept_request(iid):
+    username = session.get(username)
+
+    with dbi.connec() as conn:
+        interest = get_interest_byiid(conn, iid)
+        if not interest:
+            flash("This request doesn't exist")
+        else:
+            accept_request(conn, iid)
+            change_post_status(conn, interest[], 'Calimed')
+        return redirect(url_for('profile', username))
 
 @app.route('/profile/<username>')
 # Profile (Team Member 1): Display the current user's Donate and Request posts in Profile.
