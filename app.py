@@ -26,11 +26,9 @@ os.makedirs(app.config['UPLOADS'],exist_ok=True)
 
 @app.route('/')
 def index():
-    with dbi.connect() as conn:
-        donate_posts,request_posts=get_active_posts(conn) #shows posts on the front page
-    return render_template('main.html', page_title='Main Page',
-                           donate_posts=donate_posts,
-                           request_posts=request_posts)
+    # with dbi.connect() as conn:
+    #     donate_posts,request_posts=get_active_posts(conn) #shows posts on the front page
+    return render_template('main.html', page_title='Main Page',)
 
 @app.route('/register/', methods=["POST"])
 def register():
