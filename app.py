@@ -150,13 +150,14 @@ def cancell_request(pid):
             return redirect(url_for('index'))
         if post['uid'] == sid:
             flash("You can't cancel request to your own post")
-
+            return redirect(url_for('index'))
         interest = get_interest(conn, pid, uid)
         if interest is None or interest['status'] not in ('Pending', 'Accepted'):
             flash("You have not made a request")
             return render_template(url_for('post'), pid=pid)
-
         withdraw_interest(conn, interest['iid'])
+        flash("Your request was withdrawn")
+        return render_template(url_for('post'), pid=pid)
 
 
 def make_request(pid):
