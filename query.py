@@ -31,15 +31,6 @@ def decline_request(conn, iid):
         ''',[iid])
     conn.commit()
 
-def get_post(conn, pid):
-    '''getting post based on pid'''
-    with dbi.dict_cursor(conn) as curs:
-        curs.execute('''
-            select * from posts
-            where pid=%s
-        ''',[pid])
-        return curs.fetchone()
-
 def get_interest_bypid(conn, pid, uid):
     '''getting post request based on iid'''
     with dbi.dict_cursor(conn) as curs:
