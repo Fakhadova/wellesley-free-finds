@@ -22,6 +22,15 @@ def accept_request(conn, iid):
         ''',[iid])
     conn.commit()
 
+def decline_request(conn, iid):
+    with dbi.dict_cursor(conn) as curs:
+        curs.execute('''
+        update interests
+        status='Declined'
+        where iid=%s
+        ''',[iid])
+    conn.commit()
+
 def get_post(conn, pid):
     '''getting post based on pid'''
     with dbi.dict_cursor(conn) as curs:

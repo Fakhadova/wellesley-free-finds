@@ -185,7 +185,19 @@ def cancell_request(pid):
         flash("Your request was withdrawn")
         return render_template(url_for('post'), pid=pid)
 
-@app.route('/profile/request_list/<int:iid>')#what is the endpoint of this?
+@app.route('/profile/request_list/<int:iid>/accept')#what is the endpoint of this?
+def accept_request(iid):
+    username = session.get(username)
+
+    with dbi.connec() as conn:
+        interest = get_interest_byiid(conn, iid)
+        if not interest:
+            flash("This request doesn't exist")
+        else:
+            decline_request(conn, iid)
+        return redirect(url_for('profile', username))
+
+@app.route('/profile/request_list/<int:iid>/decline')#what is the endpoint of this?
 def accept_request(iid):
     username = session.get(username)
 
