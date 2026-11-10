@@ -142,21 +142,21 @@ def cancell_request(pid):
         flash('please login first')
         return redirect(url_for('login'))
 
-    conn = dbi.connect()
-    post = get_post(conn, pid)
+    with dbi.connect() as conn:
+        post = get_post(conn, pid)
 
-    if post is None:
-        flash("Post doesn't exist")
-        return redirect(url_for('index'))
-    if post['uid'] == sid:
-        flash("You can't cancel request to your own post")
+        if post is None:
+            flash("Post doesn't exist")
+            return redirect(url_for('index'))
+        if post['uid'] == sid:
+            flash("You can't cancel request to your own post")
 
-    interest = get_interest(conn, pid, uid)
-    if interest is None or interest['status'] not in ('Pending', 'Accepted'):
-        flash("You have not made a request")
-        return render_template(url_for('post'), pid=pid)
+        interest = get_interest(conn, pid, uid)
+        if interest is None or interest['status'] not in ('Pending', 'Accepted'):
+            flash("You have not made a request")
+            return render_template(url_for('post'), pid=pid)
 
-    withdraw_interest(conn, interest['iid'])
+        withdraw_interest(conn, interest['iid'])
 
 
 def make_request(pid):
@@ -165,19 +165,19 @@ def make_request(pid):
         flash('Please login first')
         return redirect(url_for('login'))
 
-    conn = dbi.connect()
-    post = get_post(conn, pid) #whatever you use to find a post based on pid
-    if post is None:
-        flash("Post doesn't exist")
-        return redirect(url_for('index'))
-    if post['uid'] == sid:
-        flash("You can't request to your own post")
-    elif post['status'] not in ('Available', 'Open'):
-        flash('This post is not available')
-    else:
-        add_request(conn, sid, pid, 'Pending')
-        flash('request sent')
-    return redirect(url_for('post', pid=pid))
+    with dbi.connect() as conn:
+        post = get_post(conn, pid) #whatever you use to find a post based on pid
+        if post is None:
+            flash("Post doesn't exist")
+            return redirect(url_for('index'))
+        if post['uid'] == sid:
+            flash("You can't request to your own post")
+        elif post['status'] not in ('Available', 'Open'):
+            flash('This post is not available')
+        else:
+            add_request(conn, sid, pid, 'Pending')
+            flash('request sent')
+        return redirect(url_for('post', pid=pid))
 
 
 @app.route('/profile/<username>')
@@ -193,16 +193,12 @@ def profile(username):
         with dbi.dict_cursor(conn) as curs:
             curs.execute('''SELECT * FROM posts WHERE uid = %s''', [uid])
             posts = curs.fetchall()
-<<<<<<< HEAD
-
-=======
             curs.execute('''SELECT * from posts where uid = %s and is_deleted = 0 and status not in ('Completed', 'Fulfilled')
             order by posted_at desc''', [uid])
             active_posts = curs.fetchall()
             curs.execute('''SELECT * from posts where uid = %s and is_deleted = 0 and status in ('Completed', 'Fulfilled')
             order by posted_at desc''', [uid])
             archived_posts = curs.fetchall()
->>>>>>> 158c77129704b518497c2c051fde03e35cdbd11c
     return render_template('profile.html', page_title = f"{username}'s Profile", posts = posts)
 
 
