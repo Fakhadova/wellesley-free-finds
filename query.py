@@ -4,49 +4,75 @@ import cs304dbi as dbi
 dbi.conf('fahama_db')
 
 def add_request(conn, sid, pid, status):
-    curs = dbi.cursor(conn)
-    curs.execute('''
-    insert into interests (pid, uid, status)
-    values (%s, %s, %s)
-    on duplicate key update status='Pending'
-    ''', [pid, sid, status])
+    with dbi.dict_cursor(conn) as curs:
+        curs.execute('''
+        insert into interests (pid, uid, status)
+        values (%s, %s, %s)
+        on duplicate key update status='Pending'
+        ''', [pid, sid, status])
+        conn.commit()
+        return
+
+def accept_request(conn, iid):
+    with dbi.dict_cursor(conn) as curs:
+        curs.execute('''
+        update interests
+        status='Accepted'
+        where iid=%s
+        ''',[iid])
     conn.commit()
-    return
 
 def get_post(conn, pid):
     '''getting post based on pid'''
-    curs = dbi.dict_cursor(conn)
-    curs.execute('''
-        select * from posts
-        where pid=%s
-    ''',[pid])
-    return curs.fetchone()
+    with dbi.dict_cursor(conn) as curs:
+        curs.execute('''
+            select * from posts
+            where pid=%s
+        ''',[pid])
+        return curs.fetchone()
 
-def get_interest(conn, pid, uid):
+def get_interest_bypid(conn, pid, uid):
     '''getting post request based on iid'''
-    curs = dbi.dict_cursor(conn)
-    curs.execute('''
-        select * from interests
-        where pid=%s and uid=%s
-    ''', [pid, uid])
-    return curs.fetchone()
+    with dbi.dict_cursor(conn) as curs:
+        curs = dbi.dict_cursor(conn)
+        curs.execute('''
+            select * from interests
+            where pid=%s and uid=%s
+        ''', [pid, uid])
+        return curs.fetchone()
+
+def get_interest_byiid(conn, iid):
+    '''getting post request based on iid'''
+    with dbi.dict_cursor(conn) as curs:
+        curs = dbi.dict_cursor(conn)
+        curs.execute('''
+            select * from interests
+            where iid=%s
+        ''', [iid])
+        return curs.fetchone()
 
 def withdraw_interest(conn, iid):
-    curs = dbi.dict_cursor(conn)
-    curs.execute('''
-        update interests
-        set status='Withdrawn'
-        where iid=%s
-    ''',[iid])
-    curs.commit()
+    with dbi.dict_cursor(conn) as curs:
+        curs.execute('''
+            update interests
+            set status='Withdrawn'
+            where iid=%s
+        ''',[iid])
+        curs.commit()
     return
 
 def change_post_status(conn, pid, status):
-    pass
+    with dbi.dict_cursor(conn) as curs:
+        curs.execute('''
+            update posts
+            set status=%s
+            where pid=%s
+        ''', [status, pid])
+        curs.commit()
+    return
 
 
-
-#Code for donate listings & request posts 
+#Code for donate listings & request posts
 #making global variables to make life easier and to match it with the db
 CATEGORIES={
     'Clothing_Shoes': 'Clothing/Shoes',
