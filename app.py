@@ -134,32 +134,7 @@ def logout():
         flash('you are not logged in. Please login or join')
         return redirect( url_for('index') )
 
-
-@app.route('/post/<int:pid>/cancel/', methods=['POST'])
-def cancell_request(pid):
-    uid = session.get('uid')
-    if not sid:
-        flash('please login first')
-        return redirect(url_for('login'))
-
-    with dbi.connect() as conn:
-        post = get_post(conn, pid)
-
-        if post is None:
-            flash("Post doesn't exist")
-            return redirect(url_for('index'))
-        if post['uid'] == sid:
-            flash("You can't cancel request to your own post")
-            return redirect(url_for('index'))
-        interest = get_interest(conn, pid, uid)
-        if interest is None or interest['status'] not in ('Pending', 'Accepted'):
-            flash("You have not made a request")
-            return render_template(url_for('post'), pid=pid)
-        withdraw_interest(conn, interest['iid'])
-        flash("Your request was withdrawn")
-        return render_template(url_for('post'), pid=pid)
-
-
+@app.route('/post/<int:pid>/make_request', method=['POST'])
 def make_request(pid):
     sid = session.get('uid')
     if not sid:
@@ -179,6 +154,40 @@ def make_request(pid):
             add_request(conn, sid, pid, 'Pending')
             flash('request sent')
         return redirect(url_for('post', pid=pid))
+
+@app.route('/post/<int:pid>/cancel/', methods=['POST'])
+def cancell_request(pid):
+    uid = session.get('uid')
+    if not sid:
+        flash('please login first')
+        return redirect(url_for('login'))
+
+    with dbi.connect() as conn:
+        post = get_post(conn, pid)
+
+        if post is None:
+            flash("Post doesn't exist")
+            return redirect(url_for('index'))
+        #user trying to cancell request on their own post
+        if post['uid'] == sid:
+            flash("You can't cancel request to your own post")
+            return redirect(url_for('index'))
+        interest = get_interest(conn, pid, uid)
+        #if request hasn't been made or request was not in pending or accepted
+        if interest is None or interest['status'] not in ('Pending', 'Accepted'):
+            flash("You have not made a request")
+            return render_template(url_for('post'), pid=pid)
+
+        #withdraw interest
+        withdraw_interest(conn, interest['iid'])
+        if interest['status'] == 'Accepted' and post['status'] == 'Claimed':
+            set_post_status(conn, pid, 'Available')
+        flash("Your request was withdrawn")
+        return render_template(url_for('post'), pid=pid)
+
+@app.route('/')#what is the endpoint of this?
+def accept_request(iid):
+
 
 
 @app.route('/profile/<username>')

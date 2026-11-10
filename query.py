@@ -43,8 +43,14 @@ def withdraw_interest(conn, iid):
     return
 
 def change_post_status(conn, pid, status):
-    pass
-
+    with dbi.dict_cursor(conn) as curs:
+        curs.execute('''
+            update posts
+            set status=%s
+            where pid=%s
+        ''', [status, pid])
+        curs.commit()
+    return
 
 
 #Code for donate listings & request posts
