@@ -185,10 +185,8 @@ def cancell_request(pid):
         flash("Your request was withdrawn")
         return render_template(url_for('post'), pid=pid)
 
-@app.route('/')#what is the endpoint of this?
-def accept_request(iid):
-
-
+#@app.route('/')#what is the endpoint of this?
+#def accept_request(iid):
 
 @app.route('/profile/<username>')
 # Profile (Team Member 1): Display the current user's Donate and Request posts in Profile.
