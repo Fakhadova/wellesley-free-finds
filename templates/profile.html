@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+
+<h1>
+    Welcome to your profile, {{ session['username']}}
+</h1>
+
+<!-- Profile page structure: 
+ My active Posts: Available, Claimed, Open
+ Saved Posts: Posts bookmarked by user
+ Offers Made: Interests in Request posts 
+ Archieved Posts: Completed, Fulfilled 
+ Requested Items: Interests in Donate Posts
+-->
+
+<!--My active Posts: Available, Claimed, Open-->
+<div class="profile-section">
+    <h2>My Active Posts</h2>
+    <ul>
+        {% for post in active_posts %}
+            <li>{{ post.title }} - {{ post.status }}</li>
+        {% endfor %}
+    </ul>
+
