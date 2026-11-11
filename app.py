@@ -36,22 +36,22 @@ def index():
 def register():
     """Register a new user."""
     username = request.form.get('username', '').strip()
-    passwd1 = request.form.get('password1')
-    passwd2 = request.form.get('password2')
-    if username == '':
-        flash('username is required')
+    passwd1 = request.form.get('password1', '')
+    passwd2 = request.form.get('password2', '')
+    if not username or len(username) > 20: 
+        flash('Username is required (max 20 characters).)')
         return redirect(url_for('index'))
-    if passwd1 == '':
-        flash('password is required')
+    if not passwd1: 
+        flash('Password is required.')
         return redirect(url_for('index'))
-    # this is also a good place to enforce, say, minimum password
-    # length
-    if passwd1 != passwd2:
-        flash('passwords do not match')
-        return redirect( url_for('index'))
+    if not passwd2:
+        flash('Please confirm your password.')
+        return redirect(url_for('index'))
+    if passwd1 != passwd2: 
+        flash('Passwords do not match.')
+        return redirect(url_for('index'))
     hashed = hash_password(passwd1)
-    print('REGISTER', username)
-    # should probably be a helper function
+
     with dbi.connect() as conn:
         with dbi.cursor(conn) as curs:
             try:
@@ -63,12 +63,13 @@ def register():
                 flash(f'Username taken: {err}')
                 return redirect(url_for('index'))
             uid = curs.lastrowid
-            flash(f'FYI, you were issued UID {uid}')
+            session.clear()
             session['username'] = username
             session['uid'] = uid
             session['logged_in'] = True
             session['visits'] = 1
-            return redirect(url_for('home'))
+            flash("Account created successfully.")
+            return redirect(url_for('index')
 
 @app.route('/login/', methods=["POST"])
 def login():
@@ -220,21 +221,21 @@ def accept_interest(iid):
             change_post_status(conn, interest['pid'], 'Claimed')
         return redirect(url_for('profile', username=username))
 
-# @app.route('/profile/interest_list/<int:iid>/decline', methods=['POST'])#what is the endpoint of this?
-# def decline_interest(iid):
-#     username = session.get(username)
-#     with dbi.connect() as conn:
-#         interest = get_interest_byiid(conn, iid)
-#         if not interest:
-#             flash("This request doesn't exist")
-#         post = get_post_details(conn, interest['pid'])
-#         #someone else is trying to accept a request
-#         elif post['uid']!=uid:
-#             flash("You cannot accept interest on someone else's post")
-#             return redirect(url_for('post', pid=interest['pid']))
-#         else:
-#             decline_request(conn, iid)
-#         return redirect(url_for('profile', username))
+@app.route('/profile/interest_list/<int:iid>/decline', methods=['POST'])#what is the endpoint of this?
+def decline_interest(iid):
+    username = session.get(username)
+    with dbi.connect() as conn:
+        interest = get_interest_byiid(conn, iid)
+        if not interest:
+            flash("This request doesn't exist")
+        post = get_post_details(conn, interest['pid'])
+        #someone else is trying to accept a request
+        if post['uid']!=uid:
+            flash("You cannot accept interest on someone else's post")
+            return redirect(url_for('post', pid=interest['pid']))
+        else:
+            decline_request(conn, iid)
+        return redirect(url_for('profile', username))
 
 @app.route('/profile/<username>')
 # Profile (Team Member 1): Display the current user's Donate and Request posts in Profile.
@@ -293,7 +294,7 @@ def post():
         flash('Please log in to create a post.')
         return redirect(url_for('index'))
     if request.method=='GET':
-        return render_template('create_post.html', page_title='Create a Post', 
+        return render_template('create_post.html', page_title='Create a Post',
                                categories=CATEGORIES, form={})
     form=request.form
     post_type=form.get('post_type') #getting whether its a donate or request
@@ -335,12 +336,15 @@ def post():
 @app.route('/post/<int:pid>/')
 def post_detail(pid):
     """shows a single post"""
+    uid = session.get('uid')
     with dbi.connect() as conn:
         p = get_post_details(conn, pid)
-    if p is None:
-        flash("That post doesn't exist.")
-        return redirect(url_for('index'))
-    return render_template('post_detail.html', page_title=p['title'], post=p) 
+        if p is None:
+            flash("That post doesn't exist.")
+            return redirect(url_for('index'))
+        interest = get_interest_bypid(conn, pid, uid) if uid else None
+    return render_template('post_detail.html', page_title=p['title'],
+                           post=p, uid=uid, interest=interest)
 
 
 # Request Post Management: Allow owners to edit, delete, or mark Request posts as Fulfilled. Move Fulfilled posts to the owner's archive and close outstanding offers.
