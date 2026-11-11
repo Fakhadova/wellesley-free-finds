@@ -215,22 +215,21 @@ def accept_interest(iid):
             change_post_status(conn, interest['pid'], 'Claimed')
         return redirect(url_for('profile', username=username))
 
-# @app.route('/profile/interest_list/<int:iid>/decline', methods=['POST'])#what is the endpoint of this?
-# def decline_interest(iid):
-#     username = session.get(username)
-#     with dbi.connec() as conn:
-#         interest = get_interest_byiid(conn, iid)
-#         if not interest:
-#             flash("This request doesn't exist")
-#         post = get_post_details(conn, interest['pid'])
-#         #someone else is trying to accept a request
-#         elif post['uid']!=uid:
-#             flash("You cannot accept interest on someone else's post")
-#             return redirect(url_for('post', pid=interest['pid']))
-#         else:
-#             decline_request(conn, iid)
-#             change_post_status(conn, interest['pid'], 'Claimed')
-#         return redirect(url_for('profile', username))
+@app.route('/profile/interest_list/<int:iid>/decline', methods=['POST'])#what is the endpoint of this?
+def decline_interest(iid):
+    username = session.get(username)
+    with dbi.connect() as conn:
+        interest = get_interest_byiid(conn, iid)
+        if not interest:
+            flash("This request doesn't exist")
+        post = get_post_details(conn, interest['pid'])
+        #someone else is trying to accept a request
+        elif post['uid']!=uid:
+            flash("You cannot accept interest on someone else's post")
+            return redirect(url_for('post', pid=interest['pid']))
+        else:
+            decline_request(conn, iid)
+        return redirect(url_for('profile', username))
 
 @app.route('/profile/<username>')
 # Profile (Team Member 1): Display the current user's Donate and Request posts in Profile.
@@ -349,14 +348,14 @@ def edit_post(pid):
         return redirect(url_for('index'))
     with dbi.connect() as conn:
         post = get_post_details(conn, pid)
-        if post is None: 
+        if post is None:
             flash("That post doesn't exist.")
             return redirect(url_for('index'))
         if post['uid'] != uid:
             flash("You are not authorized to edit this post.")
             return redirect(url_for('index'))
-            
-        
+
+
 @app.route('/uploads/<path:filename>')
 def uploaded_photo(filename):
     return send_from_directory(app.config['UPLOADS'], filename) #shows photo like in our exercise
