@@ -224,7 +224,7 @@ def decline_interest(iid):
             flash("This request doesn't exist")
         post = get_post_details(conn, interest['pid'])
         #someone else is trying to accept a request
-        elif post['uid']!=uid:
+        if post['uid']!=uid:
             flash("You cannot accept interest on someone else's post")
             return redirect(url_for('post', pid=interest['pid']))
         else:
