@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+<h1>Create a Post</h1>
+
+<form id="create-post" action="{{ url_for('post') }}" method="post"
+      enctype="multipart/form-data">
+
+  <fieldset>
+    <legend>What kind of post?</legend>
+    <label><input type="radio" name="post_type" value="Donate" required
+           {% if form.get('post_type', 'Donate') == 'Donate' %}checked{% endif %}>
+      Donate &mdash; I'm giving something away</label>
+    <label><input type="radio" name="post_type" value="Request"
+           {% if form.get('post_type') == 'Request' %}checked{% endif %}>
+      Request &mdash; I'm looking for something</label>
+  </fieldset>
+
+  <p><label>Item name
+    <input type="text" name="title" maxlength="100" required
+           value="{{ form.get('title', '') }}"></label></p>
+
+  <p><label>Description
+    <textarea name="description" maxlength="500" rows="4" required>{{ form.get('description', '') }}</textarea></label></p>
+
+  <fieldset>
+    <legend>Categories (choose one or more)</legend>
+    {% for value, label in categories.items() %}
+    <label><input type="checkbox" name="category" value="{{ value }}"
+           {% if value in (chosen or []) %}checked{% endif %}> {{ label }}</label>
+    {% endfor %}
+  </fieldset>
+
+  <p><label>Photo <span id="photo-note">(required)</span>
+    <input type="file" name="photo" accept="image/*"></label></p>
+
+  <p><button type="submit">Create Post</button></p>
+</form>
+{% endblock %}
+
+{% block end_scripts %}
+<script>
+//photo is required for donate posts and optional for request posts
+function updatePhotoRequirement() {
+    var isDonate = $('input[name=post_type]:checked').val() === 'Donate';
+    $('input[name=photo]').prop('required', isDonate);
+    $('#photo-note').text(isDonate ? '(required)' : '(optional)');
+}
+$('input[name=post_type]').on('change', updatePhotoRequirement);
+updatePhotoRequirement();
+
+//browsers can't require "at least one" checkbox, so check on submit.
+$('#create-post').on('submit', function (event) {
+    if ($('input[name=category]:checked').length === 0) {
+        alert('Please choose at least one category.');
+        event.preventDefault();
+    }
+});
+</script>
+{% endblock %}

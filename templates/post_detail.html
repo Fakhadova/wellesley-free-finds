@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+<article class="post-detail">
+  <p><a href="{{ url_for('index') }}">&larr; Back to Home</a></p>
+
+  <h1>{{ post.title }}</h1>
+  <p class="meta">
+    {{ 'Donation' if post.post_type == 'Donate' else 'Request' }}
+    &middot; <span class="status">{{ post.status }}</span>
+    &middot; Posted by {{ post.username }}
+    on {{ post.posted_at.strftime('%b %d, %Y at %I:%M %p') }}
+  </p>
+
+  {% if post.photo_filename %}
+  <img src="{{ url_for('uploaded_photo', filename=post.photo_filename) }}"
+       alt="Photo of {{ post.title }}" style="max-width: 100%; max-height: 400px;">
+  {% endif %}
+
+  <p>{{ post.description }}</p>
+
+  <p><strong>Categories:</strong>
+    {{ post.category | category_labels | join(', ') }}</p>
+
+  {# request item /I Have This buttons go here.#}
+</article>
+{% endblock %}
