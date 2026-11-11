@@ -74,6 +74,23 @@ def change_post_status(conn, pid, status):
         cons.commit()
     return
 
+def get_interest_on_my_post(conn, uid):
+    with dbi.dict_cursor(conn) as curs:
+        curs.execute('''
+            SELECT i.iid,
+                   i.status   AS interest_status,
+                   u.username AS requester,
+                   p.pid, p.title, p.post_type,
+                   p.status   AS post_status
+            FROM interests i
+                JOIN posts p ON i.pid = p.pid
+                JOIN users u ON i.uid = u.uid
+            WHERE p.uid = %s
+              AND p.is_deleted = 0
+              AND i.status IN ('Pending', 'Accepted')
+            ORDER BY p.posted_at DESC, i.iid
+        ''', [uid])
+        return curs.fetchall()
 
 #Code for donate listings & request posts
 #making global variables to make life easier and to match it with the db
