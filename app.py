@@ -353,6 +353,12 @@ def edit_post(pid):
         if post['uid'] != uid:
             flash("You are not authorized to edit this post.")
             return redirect(url_for('index'))
+        #Next handle the GET and POST requests for editing the post 
+        #Allow owners to edit, delete, or mark Request posts as Fulfilled. Move Fulfilled posts to the owner's archive and close outstanding offers.
+        if request.method == 'GET':
+            return render_template('edit_post.html', page_title='Edit Post', post=post, categories=CATEGORIES)
+        #Next handle the POST request for editing the post
+
             
         
 
