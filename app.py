@@ -333,10 +333,10 @@ def post_detail(pid):
     uid = session.get('uid')
     with dbi.connect() as conn:
         p = get_post_details(conn, pid)
-    if p is None:
-        flash("That post doesn't exist.")
-        return redirect(url_for('index'))
-    interest = get_interest_bypid(conn, pid, uid) if uid else None
+        if p is None:
+            flash("That post doesn't exist.")
+            return redirect(url_for('index'))
+        interest = get_interest_bypid(conn, pid, uid) if uid else None
     return render_template('post_detail.html', page_title=p['title'],
                            post=p, uid=uid, interest=interest)
 
