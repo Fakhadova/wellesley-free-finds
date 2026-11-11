@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+<h1>Wellesley Free Finds</h1>
+
+<p>Browse free items available in your community!</p>
+
+<section>
+    <h2>Items to Give Away</h2>
+    {% if donate %}
+        {% for post in donate %}
+            <article>
+                <h3>{{ post.title }}</h3>
+                <p>{{ post.description }}</p>
+                <p>Category: {{ post.category }} · Posted by {{ post.username }}</p>
+                {% if post.photo_filename %}
+                    <img src="{{ url_for('static', filename=post.photo_filename) }}" alt="{{ post.title }}">
+                {% endif %}
+            </article>
+        {% endfor %}
+    {% else %}
+        <p>No items are currently available.</p>
+    {% endif %}
+</section>
+
+<section>
+    <h2>Items Requested</h2>
+    {% if request is defined and request is iterable and request is not string %}
+        {% if request %}
+            {% for post in request %}
+                <article>
+                    <h3>{{ post.title }}</h3>
+                    <p>{{ post.description }}</p>
+                    <p>Category: {{ post.category }} · Requested by {{ post.username }}</p>
+                    {% if post.photo_filename %}
+                        <img src="{{ url_for('static', filename=post.photo_filename) }}" alt="{{ post.title }}">
+                    {% endif %}
+                </article>
+            {% endfor %}
+        {% else %}
+            <p>No requests are currently active.</p>
+        {% endif %}
+    {% endif %}
+</section>
+
+
+
+
+{% endblock %}
+
+
+
+

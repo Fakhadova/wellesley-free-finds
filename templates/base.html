@@ -14,7 +14,8 @@
 {% block nav %}
 <nav>
   <ul>
-    <li><a href="{{url_for('index')}}">Home</a></li>
+    <li><a href="{{url_for('index')}}">Login</a></li>
+    <li><a href="{{url_for('home')}}">Home</a></li>
     <li><a href="{{url_for('post')}}">Post</a></li>
     {% if session.get('uid') %}
     <li><a href = "{{url_for('profile', username = session['username'])}}">Profile</a></li>

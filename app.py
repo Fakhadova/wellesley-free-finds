@@ -68,7 +68,7 @@ def register():
             session['uid'] = uid
             session['logged_in'] = True
             session['visits'] = 1
-            return redirect(url_for('user', username=username) )
+            return redirect(url_for('home'))
 
 @app.route('/login/', methods=["POST"])
 def login():
@@ -101,14 +101,20 @@ def login():
                     curs.execute('''update users set password_hash = %s where uid = %s''',
                                  [new_hash, row['uid']])
                     conn.commit()
-                # all done; go to user's page
-                return redirect(url_for('index'))
+                # all done; go to the user's home page
+                return redirect(url_for('home'))
             else:
                 flash('login incorrect. Try again or register')
                 return redirect( url_for('index'))
 
+@app.route('/home/', endpoint='home')
+def home():
+    with dbi.connect() as conn:
+        donate, request = get_active_posts(conn)
+    return render_template('home.html', page_title='Home Page', donate=donate, request=request)
+    
 @app.route('/user/<username>')
-def user(username):
+def user(username=None):
     # don't trust the URL; it's only there for decoration
     # it could just as easily be omitted
     if 'username' in session:
@@ -120,9 +126,8 @@ def user(username):
         #                        name=username,
         #                        uid=uid,
         #                        visits=session['visits'])
-        with dbi.connect() as conn:
-            donate_posts,request_posts=get_active_posts(conn)
-            return render_template('main.html', page_title='Main Page', donate_posts=donate_posts, request_posts=request_posts)
+
+        return render_template('home.html', page_title='Home Page')
     else:
         flash('you are not logged in. Please login or join')
         return redirect( url_for('index') )
@@ -215,21 +220,21 @@ def accept_interest(iid):
             change_post_status(conn, interest['pid'], 'Claimed')
         return redirect(url_for('profile', username=username))
 
-@app.route('/profile/interest_list/<int:iid>/decline', methods=['POST'])#what is the endpoint of this?
-def decline_interest(iid):
-    username = session.get(username)
-    with dbi.connect() as conn:
-        interest = get_interest_byiid(conn, iid)
-        if not interest:
-            flash("This request doesn't exist")
-        post = get_post_details(conn, interest['pid'])
-        #someone else is trying to accept a request
-        elif post['uid']!=uid:
-            flash("You cannot accept interest on someone else's post")
-            return redirect(url_for('post', pid=interest['pid']))
-        else:
-            decline_request(conn, iid)
-        return redirect(url_for('profile', username))
+# @app.route('/profile/interest_list/<int:iid>/decline', methods=['POST'])#what is the endpoint of this?
+# def decline_interest(iid):
+#     username = session.get(username)
+#     with dbi.connect() as conn:
+#         interest = get_interest_byiid(conn, iid)
+#         if not interest:
+#             flash("This request doesn't exist")
+#         post = get_post_details(conn, interest['pid'])
+#         #someone else is trying to accept a request
+#         elif post['uid']!=uid:
+#             flash("You cannot accept interest on someone else's post")
+#             return redirect(url_for('post', pid=interest['pid']))
+#         else:
+#             decline_request(conn, iid)
+#         return redirect(url_for('profile', username))
 
 @app.route('/profile/<username>')
 # Profile (Team Member 1): Display the current user's Donate and Request posts in Profile.
