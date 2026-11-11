@@ -6,11 +6,11 @@
     Welcome to your profile, {{ session['username']}}
 </h1>
 
-<!-- Profile page structure: 
+<!-- Profile page structure:
  My active Posts: Available, Claimed, Open
  Saved Posts: Posts bookmarked by user
- Offers Made: Interests in Request posts 
- Archieved Posts: Completed, Fulfilled 
+ Offers Made: Interests in Request posts
+ Archieved Posts: Completed, Fulfilled
  Requested Items: Interests in Donate Posts
 -->
 
@@ -23,7 +23,12 @@
         {% endfor %}
     </ul>
 </div>
-
+{% for i in interests %}
+    <li>
+      <a href="{{ url_for('post_detail', pid=i.pid) }}">{{ i.title }}</a>:
+      {{ i.requester }} {{ 'requested' if i.post_type == 'Donate' else 'offered' }}
+      &middot; {{ i.interest_status }}
+      {# accept/decline forms here, same as before #}
+    </li>
+  {% endfor %}
 {% endblock %}
-    
-
