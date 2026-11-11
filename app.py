@@ -288,7 +288,7 @@ def post():
         flash('Please log in to create a post.')
         return redirect(url_for('index'))
     if request.method=='GET':
-        return render_template('create_post.html', page_title='Create a Post', 
+        return render_template('create_post.html', page_title='Create a Post',
                                categories=CATEGORIES, form={})
     form=request.form
     post_type=form.get('post_type') #getting whether its a donate or request
@@ -330,12 +330,15 @@ def post():
 @app.route('/post/<int:pid>/')
 def post_detail(pid):
     """shows a single post"""
+    uid = session.get('uid')
     with dbi.connect() as conn:
         p = get_post_details(conn, pid)
     if p is None:
         flash("That post doesn't exist.")
         return redirect(url_for('index'))
-    return render_template('post_detail.html', page_title=p['title'], post=p) 
+    interest = get_interest_bypid(conn, pid, uid) if uid else None
+    return render_template('post_detail.html', page_title=p['title'],
+                           post=p, uid=uid, interest=interest)
 
 
 # Request Post Management: Allow owners to edit, delete, or mark Request posts as Fulfilled. Move Fulfilled posts to the owner's archive and close outstanding offers.
