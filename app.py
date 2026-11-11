@@ -348,7 +348,13 @@ def edit_post(pid):
     with dbi.connect() as conn: 
         post = get_post_details(conn, pid)
         if post is None: 
-            flash("That post doesn't exist")
+            flash("That post doesn't exist.")
+            return redirect(url_for('index'))
+        if post['uid'] != uid:
+            flash("You are not authorized to edit this post.")
+            return redirect(url_for('index'))
+            
+        
 
 
 @app.route('/uploads/<path:filename>')
