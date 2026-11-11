@@ -115,11 +115,14 @@ def user(username):
         username = session['username']
         uid = session['uid']
         session['visits'] = 1+int(session.get('visits',0))
-        return render_template('greet.html',
-                               page_title=f'My App: Welcome {username}',
-                               name=username,
-                               uid=uid,
-                               visits=session['visits'])
+        # return render_template('greet.html',
+        #                        page_title=f'My App: Welcome {username}',
+        #                        name=username,
+        #                        uid=uid,
+        #                        visits=session['visits'])
+        with dbi.connect() as conn:
+            donate_posts,request_posts=get_active_posts(conn)
+            return render_template('main.html', page_title='Main Page', donate_posts=donate_posts, request_posts=request_posts)
     else:
         flash('you are not logged in. Please login or join')
         return redirect( url_for('index') )
