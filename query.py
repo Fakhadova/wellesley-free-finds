@@ -17,7 +17,7 @@ def accept_request(conn, iid):
     with dbi.dict_cursor(conn) as curs:
         curs.execute('''
         update interests
-        status='Accepted'
+        set status='Accepted'
         where iid=%s
         ''',[iid])
     conn.commit()
@@ -26,19 +26,10 @@ def decline_request(conn, iid):
     with dbi.dict_cursor(conn) as curs:
         curs.execute('''
         update interests
-        status='Declined'
+        set status='Declined'
         where iid=%s
         ''',[iid])
     conn.commit()
-
-def get_post(conn, pid):
-    '''getting post based on pid'''
-    with dbi.dict_cursor(conn) as curs:
-        curs.execute('''
-            select * from posts
-            where pid=%s
-        ''',[pid])
-        return curs.fetchone()
 
 def get_interest_bypid(conn, pid, uid):
     '''getting post request based on iid'''
@@ -67,7 +58,7 @@ def withdraw_interest(conn, iid):
             set status='Withdrawn'
             where iid=%s
         ''',[iid])
-        curs.commit()
+        cons.commit()
     return
 
 def change_post_status(conn, pid, status):
@@ -77,7 +68,7 @@ def change_post_status(conn, pid, status):
             set status=%s
             where pid=%s
         ''', [status, pid])
-        curs.commit()
+        cons.commit()
     return
 
 
