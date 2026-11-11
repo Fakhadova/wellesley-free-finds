@@ -36,22 +36,22 @@ def index():
 def register():
     """Register a new user."""
     username = request.form.get('username', '').strip()
-    passwd1 = request.form.get('password1')
-    passwd2 = request.form.get('password2')
-    if username == '':
-        flash('username is required')
+    passwd1 = request.form.get('password1', '')
+    passwd2 = request.form.get('password2', '')
+    if not username or len(username) > 20: 
+        flash('Username is required (max 20 characters).)')
         return redirect(url_for('index'))
-    if passwd1 == '':
-        flash('password is required')
+    if not passwd1: 
+        flash('Password is required.')
         return redirect(url_for('index'))
-    # this is also a good place to enforce, say, minimum password
-    # length
-    if passwd1 != passwd2:
-        flash('passwords do not match')
-        return redirect( url_for('index'))
+    if not passwd2:
+        flash('Please confirm your password.')
+        return redirect(url_for('index'))
+    if passwd1 != passwd2: 
+        flash('Passwords do not match.')
+        return redirect(url_for('index'))
     hashed = hash_password(passwd1)
-    print('REGISTER', username)
-    # should probably be a helper function
+
     with dbi.connect() as conn:
         with dbi.cursor(conn) as curs:
             try:
@@ -63,12 +63,13 @@ def register():
                 flash(f'Username taken: {err}')
                 return redirect(url_for('index'))
             uid = curs.lastrowid
-            flash(f'FYI, you were issued UID {uid}')
+            session.clear()
             session['username'] = username
             session['uid'] = uid
             session['logged_in'] = True
             session['visits'] = 1
-            return redirect(url_for('user', username=username) )
+            flash("Account created successfully.")
+            return redirect(url_for('index')
 
 @app.route('/login/', methods=["POST"])
 def login():
@@ -101,14 +102,20 @@ def login():
                     curs.execute('''update users set password_hash = %s where uid = %s''',
                                  [new_hash, row['uid']])
                     conn.commit()
-                # all done; go to user's page
-                return redirect(url_for('index'))
+                # all done; go to the user's home page
+                return redirect(url_for('home'))
             else:
                 flash('login incorrect. Try again or register')
                 return redirect( url_for('index'))
 
+@app.route('/home/', endpoint='home')
+def home():
+    with dbi.connect() as conn:
+        donate, request = get_active_posts(conn)
+    return render_template('home.html', page_title='Home Page', donate=donate, request=request)
+    
 @app.route('/user/<username>')
-def user(username):
+def user(username=None):
     # don't trust the URL; it's only there for decoration
     # it could just as easily be omitted
     if 'username' in session:
@@ -120,9 +127,8 @@ def user(username):
         #                        name=username,
         #                        uid=uid,
         #                        visits=session['visits'])
-        with dbi.connect() as conn:
-            donate_posts,request_posts=get_active_posts(conn)
-            return render_template('main.html', page_title='Main Page', donate_posts=donate_posts, request_posts=request_posts)
+
+        return render_template('home.html', page_title='Home Page')
     else:
         flash('you are not logged in. Please login or join')
         return redirect( url_for('index') )
