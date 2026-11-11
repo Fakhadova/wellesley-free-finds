@@ -215,22 +215,21 @@ def accept_interest(iid):
             change_post_status(conn, interest['pid'], 'Claimed')
         return redirect(url_for('profile', username=username))
 
-# @app.route('/profile/interest_list/<int:iid>/decline', methods=['POST'])#what is the endpoint of this?
-# def decline_interest(iid):
-#     username = session.get(username)
-#     with dbi.connec() as conn:
-#         interest = get_interest_byiid(conn, iid)
-#         if not interest:
-#             flash("This request doesn't exist")
-#         post = get_post_details(conn, interest['pid'])
-#         #someone else is trying to accept a request
-#         elif post['uid']!=uid:
-#             flash("You cannot accept interest on someone else's post")
-#             return redirect(url_for('post', pid=interest['pid']))
-#         else:
-#             decline_request(conn, iid)
-#             change_post_status(conn, interest['pid'], 'Claimed')
-#         return redirect(url_for('profile', username))
+@app.route('/profile/interest_list/<int:iid>/decline', methods=['POST'])#what is the endpoint of this?
+def decline_interest(iid):
+    username = session.get(username)
+    with dbi.connect() as conn:
+        interest = get_interest_byiid(conn, iid)
+        if not interest:
+            flash("This request doesn't exist")
+        post = get_post_details(conn, interest['pid'])
+        #someone else is trying to accept a request
+        if post['uid']!=uid:
+            flash("You cannot accept interest on someone else's post")
+            return redirect(url_for('post', pid=interest['pid']))
+        else:
+            decline_request(conn, iid)
+        return redirect(url_for('profile', username))
 
 @app.route('/profile/<username>')
 # Profile (Team Member 1): Display the current user's Donate and Request posts in Profile.
@@ -289,7 +288,7 @@ def post():
         flash('Please log in to create a post.')
         return redirect(url_for('index'))
     if request.method=='GET':
-        return render_template('create_post.html', page_title='Create a Post', #I WILL CREATE THIS HTMLS SOON <3
+        return render_template('create_post.html', page_title='Create a Post', 
                                categories=CATEGORIES, form={})
     form=request.form
     post_type=form.get('post_type') #getting whether its a donate or request
@@ -336,7 +335,7 @@ def post_detail(pid):
     if p is None:
         flash("That post doesn't exist.")
         return redirect(url_for('index'))
-    return render_template('post_detail.html', page_title=p['title'], post=p) #I WILL CREATE THIS HTMLLLL
+    return render_template('post_detail.html', page_title=p['title'], post=p) 
 
 
 # Request Post Management: Allow owners to edit, delete, or mark Request posts as Fulfilled. Move Fulfilled posts to the owner's archive and close outstanding offers.
@@ -349,30 +348,12 @@ def edit_post(pid):
         return redirect(url_for('index'))
     with dbi.connect() as conn:
         post = get_post_details(conn, pid)
-<<<<<<< HEAD
-        if post is None:
-            flash("That post doesn't exist")
-=======
         if post is None:
             flash("That post doesn't exist.")
             return redirect(url_for('index'))
         if post['uid'] != uid:
             flash("You are not authorized to edit this post.")
             return redirect(url_for('index'))
-<<<<<<< HEAD
-        #Next handle the GET and POST requests for editing the post 
-        #Allow owners to edit, delete, or mark Request posts as Fulfilled. Move Fulfilled posts to the owner's archive and close outstanding offers.
-        if request.method == 'GET':
-            return render_template('edit_post.html', page_title='Edit Post', post=post, categories=CATEGORIES)
-        #Next handle the POST request for editing the post
-
-            
-        
-=======
-
-
->>>>>>> 1ca3f9de8f8a0e14302fe1a47373bc66eae194d8
->>>>>>> f12fa272f7788da709ba06158b8a411597c0535e
 
 
 @app.route('/uploads/<path:filename>')
