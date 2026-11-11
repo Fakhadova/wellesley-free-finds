@@ -11,9 +11,9 @@
 */
 
 HTML {
-    --color-header: #0073e6;  /* for H1-H6 and nav buttons. */
-    --color-focus: #5ba300;   /* for focussed elements and mouseover on nav */
-    --color-alert: #b51963;   /* for flashed messages and such. */
+    --color-header: #ff41f9;  /* for H1-H6 and nav buttons. */
+    --color-focus: #74ffda;   /* for focussed elements and mouseover on nav */
+    --color-alert: #f46969;   /* for flashed messages and such. */
     --color-nav-fg: white;    /* foreground color of nav text. */
     --font-family: Verdana;
     font-family: var(--font-family)
@@ -27,12 +27,13 @@ HTML {
 }
 
 
-h1, h2, h3, h4, h5, h6 {
+h2, h3, h4, h5, h6 {
     color: var(--color-header);
 }
 
 h1 {
     font-size: 200%;
+    color: rgb(78, 193, 255)
 }
     
 
