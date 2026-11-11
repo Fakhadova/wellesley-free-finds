@@ -335,6 +335,20 @@ def post_detail(pid):
     return render_template('post_detail.html', page_title=p['title'], post=p) #I WILL CREATE THIS HTMLLLL
 
 
+# Request Post Management: Allow owners to edit, delete, or mark Request posts as Fulfilled. Move Fulfilled posts to the owner's archive and close outstanding offers.
+@app.route('/post/<int:pid>/edit/', methods = ['GET', 'POST'])
+def edit_post(pid): 
+    '''Allow owners to edith their Request posts.'''
+    uid = session.get('uid')
+    if not uid: 
+        flash('Please log in to edit your post.')
+        return redirect(url_for('index'))
+    with dbi.connect() as conn: 
+        post = get_post_details(conn, pid)
+        if post is None: 
+            flash("That post doesn't exist")
+
+
 @app.route('/uploads/<path:filename>')
 def uploaded_photo(filename):
     return send_from_directory(app.config['UPLOADS'], filename) #shows photo like in our exercise
