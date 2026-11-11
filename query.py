@@ -4,6 +4,7 @@ import cs304dbi as dbi
 dbi.conf('fahama_db')
 
 def add_request(conn, sid, pid, status):
+    '''adding interest to interest table (pid, uid, status)'''
     with dbi.dict_cursor(conn) as curs:
         curs.execute('''
         insert into interests (pid, uid, status)
@@ -14,6 +15,7 @@ def add_request(conn, sid, pid, status):
         return
 
 def accept_request(conn, iid):
+    '''change the status of interest at iid to Accepted'''
     with dbi.dict_cursor(conn) as curs:
         curs.execute('''
         update interests
@@ -23,6 +25,7 @@ def accept_request(conn, iid):
     conn.commit()
 
 def decline_request(conn, iid):
+    '''change the status of interest at iid to Declined'''
     with dbi.dict_cursor(conn) as curs:
         curs.execute('''
         update interests
@@ -52,6 +55,7 @@ def get_interest_byiid(conn, iid):
         return curs.fetchone()
 
 def withdraw_interest(conn, iid):
+    '''change the status of iid to Withdrawn'''
     with dbi.dict_cursor(conn) as curs:
         curs.execute('''
             update interests
@@ -62,6 +66,7 @@ def withdraw_interest(conn, iid):
     return
 
 def change_post_status(conn, pid, status):
+    '''change the status of iid to given status'''
     with dbi.dict_cursor(conn) as curs:
         curs.execute('''
             update posts
