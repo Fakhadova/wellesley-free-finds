@@ -115,11 +115,14 @@ def user(username):
         username = session['username']
         uid = session['uid']
         session['visits'] = 1+int(session.get('visits',0))
-        return render_template('greet.html',
-                               page_title=f'My App: Welcome {username}',
-                               name=username,
-                               uid=uid,
-                               visits=session['visits'])
+        # return render_template('greet.html',
+        #                        page_title=f'My App: Welcome {username}',
+        #                        name=username,
+        #                        uid=uid,
+        #                        visits=session['visits'])
+        with dbi.connect() as conn:
+            donate_posts,request_posts=get_active_posts(conn)
+            return render_template('main.html', page_title='Main Page', donate_posts=donate_posts, request_posts=request_posts)
     else:
         flash('you are not logged in. Please login or join')
         return redirect( url_for('index') )
@@ -154,7 +157,7 @@ def make_request(pid):
         else:
             add_request(conn, sid, pid, 'Pending')
             flash('request sent')
-        return redirect(url_for('post', pid=pid))
+        return redirect(url_for('post_detail', pid=pid))
 
 @app.route('/post/<int:pid>/cancel/', methods=['POST'])
 def cancel_request(pid):
@@ -168,7 +171,7 @@ def cancel_request(pid):
             flash("Post doesn't exist")
             return redirect(url_for('index'))
         #user trying to cancell request on their own post
-        if post['uid'] == sid:
+        if post['uid'] == uid:
             flash("You can't cancel request to your own post")
             return redirect(url_for('index'))
         interest = get_interest_bypid(conn, pid, uid)
@@ -176,41 +179,40 @@ def cancel_request(pid):
         #if request hasn't been made or request was not in pending or accepted
         if interest is None or interest['status'] not in ('Pending', 'Accepted'):
             flash("You have not made a request")
-            return redirect(url_for('post', pid=pid))
+            return redirect(url_for('post_detail', pid=pid))
         #someone else is trying to cancel a request
         if interest['uid']!=uid:
             flash("You cannot cancel someone else's request")
-            return redirect(url_for('post', pid=pid))
+            return redirect(url_for('post_detail', pid=pid))
         #withdraw interest
         withdraw_interest(conn, interest['iid'])
         if interest['status'] == 'Accepted' and post['status'] == 'Claimed':
             change_post_status(conn, pid, 'Available')
         flash("Your request was withdrawn")
-        return redirect(url_for('post', pid=pid))
+        return redirect(url_for('post_detail', pid=pid))
 
 @app.route('/profile/interest_list/<int:iid>/accept', methods=['POST'])#what is the endpoint of this?
 def accept_interest(iid):
-    username = session.get(username)
-    uid = session.get(uid)
-    with dbi.connec() as conn:
+    username = session.get('username')
+    uid = session.get('uid')
+    with dbi.connect() as conn:
         interest = get_interest_byiid(conn, iid)
         if not interest:
             flash("This request doesn't exist")
         if interest['status']!='Pending':
             flash('you cannot accept this interest')
+            return redirect(url_for('profile', username=username))
         post = get_post_details(conn, interest['pid'])
         #someone else is trying to accept a request
-        if post['uid']!=uid:
+        if post is None or post['uid']!=uid:
             flash("You cannot accept interest on someone else's post")
-            return redirect(url_for('post', pid=interest['pid']))
-        elif interest['uid']!=uid:
-            flash("You cannot cancel someone else's request")
-            return redirect(url_for('post', pid=interest['pid']))
-        elif post['status']!='Open':
+            return redirect(url_for('post_detail', pid=interest['pid']))
+        elif post['status'] not in ('Available', 'Open'):
             flash('This item is already filled')
             return redirect(url_for('profile', username=username))
         else:
             accept_request(conn, iid)
+            change_post_status(conn, interest['pid'], 'Claimed')
         return redirect(url_for('profile', username=username))
 
 # @app.route('/profile/interest_list/<int:iid>/decline', methods=['POST'])#what is the endpoint of this?
@@ -339,20 +341,25 @@ def post_detail(pid):
 
 # Request Post Management: Allow owners to edit, delete, or mark Request posts as Fulfilled. Move Fulfilled posts to the owner's archive and close outstanding offers.
 @app.route('/post/<int:pid>/edit/', methods = ['GET', 'POST'])
-def edit_post(pid): 
+def edit_post(pid):
     '''Allow owners to edith their Request posts.'''
     uid = session.get('uid')
-    if not uid: 
+    if not uid:
         flash('Please log in to edit your post.')
         return redirect(url_for('index'))
-    with dbi.connect() as conn: 
+    with dbi.connect() as conn:
         post = get_post_details(conn, pid)
-        if post is None: 
+<<<<<<< HEAD
+        if post is None:
+            flash("That post doesn't exist")
+=======
+        if post is None:
             flash("That post doesn't exist.")
             return redirect(url_for('index'))
         if post['uid'] != uid:
             flash("You are not authorized to edit this post.")
             return redirect(url_for('index'))
+<<<<<<< HEAD
         #Next handle the GET and POST requests for editing the post 
         #Allow owners to edit, delete, or mark Request posts as Fulfilled. Move Fulfilled posts to the owner's archive and close outstanding offers.
         if request.method == 'GET':
@@ -361,6 +368,11 @@ def edit_post(pid):
 
             
         
+=======
+
+
+>>>>>>> 1ca3f9de8f8a0e14302fe1a47373bc66eae194d8
+>>>>>>> f12fa272f7788da709ba06158b8a411597c0535e
 
 
 @app.route('/uploads/<path:filename>')

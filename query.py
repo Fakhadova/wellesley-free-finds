@@ -37,7 +37,6 @@ def decline_request(conn, iid):
 def get_interest_bypid(conn, pid, uid):
     '''getting post request based on iid'''
     with dbi.dict_cursor(conn) as curs:
-        curs = dbi.dict_cursor(conn)
         curs.execute('''
             select * from interests
             where pid=%s and uid=%s
@@ -47,7 +46,6 @@ def get_interest_bypid(conn, pid, uid):
 def get_interest_byiid(conn, iid):
     '''getting post request based on iid'''
     with dbi.dict_cursor(conn) as curs:
-        curs = dbi.dict_cursor(conn)
         curs.execute('''
             select * from interests
             where iid=%s
@@ -62,7 +60,7 @@ def withdraw_interest(conn, iid):
             set status='Withdrawn'
             where iid=%s
         ''',[iid])
-        cons.commit()
+        conn.commit()
     return
 
 def change_post_status(conn, pid, status):
