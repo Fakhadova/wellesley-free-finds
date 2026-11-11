@@ -22,6 +22,33 @@
   <p><strong>Categories:</strong>
     {{ post.category | category_labels | join(', ') }}</p>
 
-  {# request item /I Have This buttons go here.#}
+    {% set is_donate = post.post_type == 'Donate' %}
+
+  {% if not uid %}
+    <p><em>Log in to {{ 'request this item' if is_donate else 'offer this item' }}.</em></p>
+
+  {% elif post.uid == uid %}
+    <p><em>This is your post.</em></p>
+
+  {% elif interest and interest.status in ('Pending', 'Accepted') %}
+    <p>
+      {% if interest.status == 'Accepted' %}
+        Your {{ 'request' if is_donate else 'offer' }} was accepted!
+      {% else %}
+        Your {{ 'request' if is_donate else 'offer' }} is pending.
+      {% endif %}
+    </p>
+    <form method="POST" action="{{ url_for('cancel_request', pid=post.pid) }}">
+      <button type="submit">{{ 'Cancel Request' if is_donate else 'Withdraw Offer' }}</button>
+    </form>
+
+  {% elif post.status not in ('Available', 'Open') %}
+    <p><em>This post is not accepting {{ 'requests' if is_donate else 'offers' }} right now.</em></p>
+
+  {% else %}
+    <form method="POST" action="{{ url_for('make_request', pid=post.pid) }}">
+      <button type="submit">{{ 'Request Item' if is_donate else 'I Have This' }}</button>
+    </form>
+  {% endif %}
 </article>
 {% endblock %}
