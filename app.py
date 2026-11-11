@@ -12,6 +12,7 @@ from pwd_context import hash_password, verify_password
 from werkzeug.utils import secure_filename
 from query import *   #helper functions
 
+
 # we need a secret_key to use flash() and sessions
 app.secret_key = secrets.token_hex()
 
@@ -26,13 +27,14 @@ os.makedirs(app.config['UPLOADS'],exist_ok=True)
 
 @app.route('/')
 def index():
-    # with dbi.connect() as conn:
-    #     donate_posts,request_posts=get_active_posts(conn) #shows posts on the front page
-    return render_template('main.html', page_title='Main Page',)
+    with dbi.connect() as conn:
+        donate_posts,request_posts=get_active_posts(conn) #shows posts on the front page
+    return render_template('main.html', page_title='Main Page', donate_posts=donate_posts, request_posts=request_posts)
+
 
 @app.route('/register/', methods=["POST"])
-''' Register a new user. '''
 def register():
+    """Register a new user."""
     username = request.form.get('username', '').strip()
     passwd1 = request.form.get('password1')
     passwd2 = request.form.get('password2')
@@ -210,21 +212,22 @@ def accept_interest(iid):
             change_post_status(conn, interest['pid'], 'Claimed')
         return redirect(url_for('profile', username=username))
 
-@app.route('/profile/interest_list/<int:iid>/decline', methods=['POST'])#what is the endpoint of this?
-def decline_interest(iid):
-    username = session.get('username')
-    with dbi.connect() as conn:
-        interest = get_interest_byiid(conn, iid)
-        if not interest:
-            flash("This request doesn't exist")
-        post = get_post_details(conn, interest['pid'])
-        #someone else is trying to accept a request
-        if post['uid']!=uid:
-            flash("You cannot accept interest on someone else's post")
-            return redirect(url_for('post_detail', pid=interest['pid']))
-        else:
-            decline_request(conn, iid)
-        return redirect(url_for('profile', username=username))
+# @app.route('/profile/interest_list/<int:iid>/decline', methods=['POST'])#what is the endpoint of this?
+# def decline_interest(iid):
+#     username = session.get(username)
+#     with dbi.connec() as conn:
+#         interest = get_interest_byiid(conn, iid)
+#         if not interest:
+#             flash("This request doesn't exist")
+#         post = get_post_details(conn, interest['pid'])
+#         #someone else is trying to accept a request
+#         elif post['uid']!=uid:
+#             flash("You cannot accept interest on someone else's post")
+#             return redirect(url_for('post', pid=interest['pid']))
+#         else:
+#             decline_request(conn, iid)
+#             change_post_status(conn, interest['pid'], 'Claimed')
+#         return redirect(url_for('profile', username))
 
 @app.route('/profile/<username>')
 # Profile (Team Member 1): Display the current user's Donate and Request posts in Profile.
@@ -331,6 +334,20 @@ def post_detail(pid):
         flash("That post doesn't exist.")
         return redirect(url_for('index'))
     return render_template('post_detail.html', page_title=p['title'], post=p) #I WILL CREATE THIS HTMLLLL
+
+
+# Request Post Management: Allow owners to edit, delete, or mark Request posts as Fulfilled. Move Fulfilled posts to the owner's archive and close outstanding offers.
+@app.route('/post/<int:pid>/edit/', methods = ['GET', 'POST'])
+def edit_post(pid):
+    '''Allow owners to edith their Request posts.'''
+    uid = session.get('uid')
+    if not uid:
+        flash('Please log in to edit your post.')
+        return redirect(url_for('index'))
+    with dbi.connect() as conn:
+        post = get_post_details(conn, pid)
+        if post is None:
+            flash("That post doesn't exist")
 
 
 @app.route('/uploads/<path:filename>')
