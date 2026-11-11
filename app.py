@@ -31,6 +31,7 @@ def index():
     return render_template('main.html', page_title='Main Page',)
 
 @app.route('/register/', methods=["POST"])
+''' Register a new user. '''
 def register():
     username = request.form.get('username', '').strip()
     passwd1 = request.form.get('password1')
