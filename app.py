@@ -69,7 +69,7 @@ def register():
             session['logged_in'] = True
             session['visits'] = 1
             flash("Account created successfully.")
-            return redirect(url_for('index')
+            return redirect(url_for('index'))
 
 @app.route('/login/', methods=["POST"])
 def login():
