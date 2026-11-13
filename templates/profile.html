@@ -19,16 +19,33 @@
     <h2>My Active Posts</h2>
     <ul>
         {% for post in active_posts %}
-            <li>{{ post.title }} - {{ post.status }}</li>
+            <li>
+                <a href="{{ url_for('post_detail', pid=post.pid) }}">
+                    {{post.title}}
+                    </a>
+                    - {{post.status}}
+            </li>
+        {% else %}
+            <li>You have no active posts.</li>
         {% endfor %}
     </ul>
 </div>
-{% for i in interests %}
-    <li>
-      <a href="{{ url_for('post_detail', pid=i.pid) }}">{{ i.title }}</a>:
-      {{ i.requester }} {{ 'requested' if i.post_type == 'Donate' else 'offered' }}
-      &middot; {{ i.interest_status }}
-      {# accept/decline forms here, same as before #}
-    </li>
-  {% endfor %}
+
+<!-- Archieved Posts: Completed, Fulfilled-->
+<div class="profile-section">
+    <h2>Archived Posts</h2>
+    <ul>
+        {% for post in archived_posts %}
+            <li>
+                <a href="{{ url_for('post_detail', pid=post.pid) }}">
+                    {{post.title}}
+                    </a>
+                    - {{post.status}}
+            </li>
+        {% else %}
+            <li>You have no archived posts.</li>
+        {% endfor %}
+    </ul>
+</div>
 {% endblock %}
+        

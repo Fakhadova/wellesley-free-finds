@@ -257,7 +257,7 @@ def profile(username):
             order by posted_at desc''', [uid])
             archived_posts = curs.fetchall()
         interests = get_interest_on_my_post(conn, uid)
-    return render_template('profile.html', page_title = f"{username}'s Profile", posts = posts, interests = interests)
+    return render_template('profile.html', page_title = f"{username}'s Profile", active_posts = active_posts, archieved_posts = archived_posts, interests = interests)
 
 
 # Donate Listings & Request Posts Code
