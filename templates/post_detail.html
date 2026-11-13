@@ -2,7 +2,7 @@
 
 {% block main_content %}
 <article class="post-detail">
-  <p><a href="{{ url_for('index') }}">&larr; Back to Home</a></p>
+  <p><a href="{{ url_for('home') }}">&larr; Back to Home</a></p>
 
   <h1>{{ post.title }}</h1>
   <p class="meta">
@@ -22,7 +22,7 @@
   <p><strong>Categories:</strong>
     {{ post.category | category_labels | join(', ') }}</p>
 
-    {% set is_donate = post.post_type == 'Donate' %}
+  {% set is_donate = post.post_type == 'Donate' %}
 
   {% if not uid %}
     <p><em>Log in to {{ 'request this item' if is_donate else 'offer this item' }}.</em></p>
@@ -50,5 +50,6 @@
       <button type="submit">{{ 'Request Item' if is_donate else 'I Have This' }}</button>
     </form>
   {% endif %}
+  {# ============ end of Request Item / I Have This buttons ============ #}
 </article>
 {% endblock %}

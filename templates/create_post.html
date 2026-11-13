@@ -1,58 +1,115 @@
 {% extends "base.html" %}
 
 {% block main_content %}
-<h1>Create a Post</h1>
+<div class="create-wrap">
+<form id="create-post" class="create-card" action="{{ url_for('post') }}"
+      method="post" enctype="multipart/form-data">
 
-<form id="create-post" action="{{ url_for('post') }}" method="post"
-      enctype="multipart/form-data">
+  <header class="create-header" style="text-align: center;">
+    <h1>Create a Post</h1>
+    <p>Be a Wellesley sweetheart and</p>
+    <p> -Give something away- or -Ask for something you need-</p>
+  </header>
 
-  <fieldset>
-    <legend>What kind of post?</legend>
-    <label><input type="radio" name="post_type" value="Donate" required
-           {% if form.get('post_type', 'Donate') == 'Donate' %}checked{% endif %}>
-      Donate &mdash; I'm giving something away</label>
-    <label><input type="radio" name="post_type" value="Request"
-           {% if form.get('post_type') == 'Request' %}checked{% endif %}>
-      Request &mdash; I'm looking for something</label>
+  {#donate or request button#}
+  <fieldset class="type-toggle">
+    <legend class="field-label">What kind of post?</legend>
+    <label class="type-option">
+      <input type="radio" name="post_type" value="Donate" required
+             {% if form.get('post_type', 'Donate') == 'Donate' %}checked{% endif %}>
+      <span>
+        <strong>Donate</strong>
+        <small>I'm giving something away!</small>
+      </span>
+    </label>
+    <label class="type-option">
+      <input type="radio" name="post_type" value="Request"
+             {% if form.get('post_type') == 'Request' %}checked{% endif %}>
+      <span>
+        <strong>Request</strong>
+        <small>I'm looking for something!</small>
+      </span>
+    </label>
   </fieldset>
 
-  <p><label>Item name
-    <input type="text" name="title" maxlength="100" required
-           value="{{ form.get('title', '') }}"></label></p>
+  {#photo drop zone #}
+  <div class="field">
+    <span class="field-label">Photo <span id="photo-note" class="hint">(required)</span></span>
+    <label class="photo-drop" id="photo-drop">
+      <input type="file" name="photo" id="photo-input" accept="image/*">
+      <img id="photo-preview" alt="Preview of your photo" hidden>
+      <span class="photo-prompt" id="photo-prompt">
+        <span class="photo-icon" aria-hidden="true">+</span>
+        Click to add a photo<br><small>JPG, PNG, GIF or WEBP, up to 5 MB</small>
+      </span>
+    </label>
+  </div>
 
-  <p><label>Description
-    <textarea name="description" maxlength="500" rows="4" required>{{ form.get('description', '') }}</textarea></label></p>
+  {#title portion #}
+  <div class="field">
+    <label class="field-label" for="title">Item name</label>
+    <input type="text" id="title" name="title" maxlength="100" required
+           placeholder="e.g. Desk lamp, plushie, really expensive coat"
+           value="{{ form.get('title', '') }}">
+    <span class="counter" data-for="title">0 / 100</span>
+  </div>
 
-  <fieldset>
-    <legend>Categories (choose one or more)</legend>
-    {% for value, label in categories.items() %}
-    <label><input type="checkbox" name="category" value="{{ value }}"
-           {% if value in (chosen or []) %}checked{% endif %}> {{ label }}</label>
-    {% endfor %}
+  {#item description!#}
+  <div class="field">
+    <label class="field-label" for="description">Description</label>
+    <textarea id="description" name="description" maxlength="500" rows="4" required
+              placeholder="Condition, size, meaningful history, anything helpful...">{{ form.get('description', '') }}</textarea>
+    <span class="counter" data-for="description">0 / 500</span>
+  </div>
+
+  {#categories as a multi-selectable chip#}
+  <fieldset class="field">
+    <legend class="field-label">Categories <span class="hint">(choose one or more)</span></legend>
+    <div class="chip-picker">
+      {% for value, label in categories.items() %}
+      <label class="chip-option">
+        <input type="checkbox" name="category" value="{{ value }}"
+               {% if value in (chosen or []) %}checked{% endif %}>
+        <span>{{ label }}</span>
+      </label>
+      {% endfor %}
+    </div>
   </fieldset>
 
-  <p><label>Photo <span id="photo-note">(required)</span>
-    <input type="file" name="photo" accept="image/*"></label></p>
-
-  <p><button type="submit">Create Post</button></p>
+  <button type="submit" class="submit-btn" id="submit-btn">Post Donation</button>
 </form>
+</div>
 {% endblock %}
 
 {% block end_scripts %}
 <script>
-//photo is required for donate posts and optional for request posts
-function updatePhotoRequirement() {
-    var isDonate = $('input[name=post_type]:checked').val() === 'Donate';
-    $('input[name=photo]').prop('required', isDonate);
+//have to have this bc only donate posts need a photo ;;
+function updateForType() {
+    var isDonate= $('input[name=post_type]:checked').val()==='Donate';
+    $('#photo-input').prop('required', isDonate);
     $('#photo-note').text(isDonate ? '(required)' : '(optional)');
+    $('#submit-btn').text(isDonate ? 'Post Donation' : 'Post Request');
 }
-$('input[name=post_type]').on('change', updatePhotoRequirement);
-updatePhotoRequirement();
+$('input[name=post_type]').on('change', updateForType);
+updateForType();
+//this shows the photo in the zone
+$('#photo-input').on('change', function () {
+    var file = this.files[0];
+    if (file) {
+        $('#photo-preview').attr('src', URL.createObjectURL(file)).prop('hidden', false);
+        $('#photo-prompt').prop('hidden', true);
+        $('#photo-drop').addClass('has-photo');
+    } else {
+        $('#photo-preview').prop('hidden', true).attr('src', '');
+        $('#photo-prompt').prop('hidden', false);
+        $('#photo-drop').removeClass('has-photo');
+    }
+});
 
-//browsers can't require "at least one" checkbox, so check on submit.
+//making sure they choose at least one
 $('#create-post').on('submit', function (event) {
     if ($('input[name=category]:checked').length === 0) {
-        alert('Please choose at least one category.');
+        alert('Oh no, please choose at least one category.');
         event.preventDefault();
     }
 });
