@@ -111,8 +111,8 @@ def login():
 @app.route('/home/', endpoint='home')
 def home():
     with dbi.connect() as conn:
-        donate, request = get_active_posts(conn)
-    return render_template('home.html', page_title='Home Page', donate=donate, request=request)
+        posts = get_all_active_posts(conn)
+    return render_template('home.html', page_title='Home Page', posts=posts)
 
 @app.route('/user/<username>')
 def user(username=None):

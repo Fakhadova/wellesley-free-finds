@@ -1,53 +1,45 @@
 {% extends "base.html" %}
 
 {% block main_content %}
-<h1>Wellesley Free Finds</h1>
+<header class="home-hero">
+  <h1>Wellesley Free Finds</h1>
+  <p>Browse free items from your campus community, or see what others are looking for.</p>
+</header>
 
-<p>Browse free items available in your community!</p>
+{# Filter bar goes here #}
 
-<section>
-    <h2>Items to Give Away</h2>
-    {% if donate %}
-        {% for post in donate %}
-            <article>
-                <h3>{{ post.title }}</h3>
-                <p>{{ post.description }}</p>
-                <p>Category: {{ post.category }} · Posted by {{ post.username }}</p>
-                {% if post.photo_filename %}
-                    <img src="{{ url_for('static', filename=post.photo_filename) }}" alt="{{ post.title }}">
-                {% endif %}
-            </article>
-        {% endfor %}
-    {% else %}
-        <p>No items are currently available.</p>
-    {% endif %}
+<section class="listing">
+  <p class="count">{{ posts | length }} item{{ '' if posts | length == 1 else 's' }}</p>
+
+  {% if posts %}
+  <ul class="card-grid">
+    {% for p in posts %}
+    <li>
+      {# The whole card links to the post detail page #}
+      <a class="card" href="{{ url_for('post_detail', pid=p.pid) }}">
+        <div class="card-photo">
+          {% if p.photo_filename %}
+            <img src="{{ url_for('uploaded_photo', filename=p.photo_filename) }}"
+                 alt="Photo of {{ p.title }}" loading="lazy">
+          {% else %}
+            <span class="no-photo">No photo :C </span>
+          {% endif %}
+        </div>
+        <div class="card-body">
+          <div class="tags">
+            <span class="tag tag-{{ p.post_type | lower }}">{{ p.post_type }}</span>
+            <span class="tag tag-{{ p.status | lower }}">{{ p.status }}</span>
+          </div>
+          <h3>{{ p.title }}</h3>
+          <p class="card-cats">{{ p.category | category_labels | join(' · ') }}</p>
+          <p class="card-meta">{{ p.username }} &middot; {{ p.posted_at.strftime('%b %d') }}</p>
+        </div>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+    <p class="empty">Nothing has been posted yet.</p>
+  {% endif %}
 </section>
-
-<section>
-    <h2>Items Requested</h2>
-    {% if request is defined and request is iterable and request is not string %}
-        {% if request %}
-            {% for post in request %}
-                <article>
-                    <h3>{{ post.title }}</h3>
-                    <p>{{ post.description }}</p>
-                    <p>Category: {{ post.category }} · Requested by {{ post.username }}</p>
-                    {% if post.photo_filename %}
-                        <img src="{{ url_for('static', filename=post.photo_filename) }}" alt="{{ post.title }}">
-                    {% endif %}
-                </article>
-            {% endfor %}
-        {% else %}
-            <p>No requests are currently active.</p>
-        {% endif %}
-    {% endif %}
-</section>
-
-
-
-
 {% endblock %}
-
-
-
-

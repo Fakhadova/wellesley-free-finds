@@ -121,8 +121,9 @@ def add_post(conn, uid, post_type, title, description, categories, photo_filenam
     conn.commit()
     return curs.lastrowid
 
-def get_active_posts(conn):
-    '''this is for the posts shown in home, newest first and excludes deleted and archived posts'''
+def get_all_active_posts(conn):
+    '''all posts shown in home with newest first.
+    excludes deleted and archived posts'''
     curs=dbi.dict_cursor(conn)
     curs.execute('''
         select p.pid, p.uid, u.username, p.post_type, p.title,
@@ -132,9 +133,13 @@ def get_active_posts(conn):
         where p.is_deleted = 0 and p.status not in (%s, %s)
         order by p.posted_at desc
     ''', list(ARCHIVED_STATUSES))
+    return curs.fetchall()
+
+def get_active_posts(conn):
+    '''same posts as get_all_active_posts but split into donate or request'''
     donate=[]
     request=[]
-    for post in curs.fetchall():
+    for post in get_all_active_posts(conn):
         (donate if post['post_type']=='Donate' else request).append(post)
     return donate, request
 
