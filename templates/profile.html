@@ -23,12 +23,26 @@
         {% endfor %}
     </ul>
 </div>
-{% for i in interests %}
-    <li>
-      <a href="{{ url_for('post_detail', pid=i.pid) }}">{{ i.title }}</a>:
-      {{ i.requester }} {{ 'requested' if i.post_type == 'Donate' else 'offered' }}
-      &middot; {{ i.interest_status }}
-      {# accept/decline forms here, same as before #}
-    </li>
-  {% endfor %}
-{% endblock %}
+<div class="interest-list">
+    <h2>Interest list</h2>
+    {% for i in interests %}
+        <li>
+        <a href="{{ url_for('post_detail', pid=i.pid) }}">{{ i.title }}</a>:
+        {{ i.requester }} {{ 'requested' if i.post_type == 'Donate' else 'offered' }}
+        &middot; {{ i.interest_status }}
+        <form
+            class='accept'
+            method="post"
+            action = "{{ url_for('accept_interest', iid=i.iid) }}">
+            <button type="submit">Accept Request</button>
+        </form>
+        <form
+            class='accept'
+            method="post"
+            action = "{{ url_for('decline_interest', iid=i.iid) }}">
+            <button type="submit">Decline Request</button>
+        </form>
+        </li>
+    {% endfor %}
+    {% endblock %}
+</div>

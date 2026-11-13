@@ -38,16 +38,16 @@ def register():
     username = request.form.get('username', '').strip()
     passwd1 = request.form.get('password1', '')
     passwd2 = request.form.get('password2', '')
-    if not username or len(username) > 20: 
+    if not username or len(username) > 20:
         flash('Username is required (max 20 characters).)')
         return redirect(url_for('index'))
-    if not passwd1: 
+    if not passwd1:
         flash('Password is required.')
         return redirect(url_for('index'))
     if not passwd2:
         flash('Please confirm your password.')
         return redirect(url_for('index'))
-    if passwd1 != passwd2: 
+    if passwd1 != passwd2:
         flash('Passwords do not match.')
         return redirect(url_for('index'))
     hashed = hash_password(passwd1)
@@ -113,7 +113,7 @@ def home():
     with dbi.connect() as conn:
         donate, request = get_active_posts(conn)
     return render_template('home.html', page_title='Home Page', donate=donate, request=request)
-    
+
 @app.route('/user/<username>')
 def user(username=None):
     # don't trust the URL; it's only there for decoration
@@ -201,6 +201,9 @@ def cancel_request(pid):
 def accept_interest(iid):
     username = session.get('username')
     uid = session.get('uid')
+    if not username:
+        flash('Please log in')
+        return redirect(url_for('index'))
     with dbi.connect() as conn:
         interest = get_interest_byiid(conn, iid)
         if not interest:
@@ -219,11 +222,16 @@ def accept_interest(iid):
         else:
             accept_request(conn, iid)
             change_post_status(conn, interest['pid'], 'Claimed')
+            flash('Accepted the interest')
         return redirect(url_for('profile', username=username))
 
 @app.route('/profile/interest_list/<int:iid>/decline', methods=['POST'])#what is the endpoint of this?
 def decline_interest(iid):
-    username = session.get(username)
+    username = session.get('username')
+    uid = session.get('uid')
+    if not username:
+        flash('please log in first')
+        redirect(url_for('index'))
     with dbi.connect() as conn:
         interest = get_interest_byiid(conn, iid)
         if not interest:
@@ -235,7 +243,7 @@ def decline_interest(iid):
             return redirect(url_for('post', pid=interest['pid']))
         else:
             decline_request(conn, iid)
-        return redirect(url_for('profile', username))
+        return redirect(url_for('profile', username=username))
 
 @app.route('/profile/<username>')
 # Profile (Team Member 1): Display the current user's Donate and Request posts in Profile.
