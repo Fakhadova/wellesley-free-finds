@@ -19,10 +19,18 @@
     <h2>My Active Posts</h2>
     <ul>
         {% for post in active_posts %}
-            <li>{{ post.title }} - {{ post.status }}</li>
+            <li>
+                <a href="{{ url_for('post_detail', pid=post.pid) }}">
+                    {{post.title}}
+                    </a>
+                    - {{post.status}}
+            </li>
+        {% else %}
+            <li>You have no active posts.</li>
         {% endfor %}
     </ul>
 </div>
+<<<<<<< HEAD
 <div class="my_interest_list">
     <h2>My Interest List</h2>
     {% for i in my_interests %}
@@ -61,4 +69,71 @@
         </li>
     {% endfor %}
     {% endblock %}
+=======
+
+<!-- Archieved Posts: Completed, Fulfilled-->
+<div class="profile-section">
+    <h2>Archived Posts</h2>
+    <ul>
+        {% for post in archived_posts %}
+            <li>
+                <a href="{{ url_for('post_detail', pid=post.pid) }}">
+                    {{post.title}}
+                    </a>
+                    - {{post.status}}
+            </li>
+        {% else %}
+            <li>You have no archived posts.</li>
+        {% endfor %}
+    </ul>
+>>>>>>> 3284c88b250e7d763789da0f7992f46eacbd18d6
 </div>
+
+<!-- Interests in Posts -->
+ <div class="interest-list">
+    <h2> Interests in My Posts</h2>
+    <ul>
+        {% for interest in interests %}
+            <li>
+                <a href="{{ url_for('post_detail', pid=interest.pid) }}">
+                    {{interest.title}}
+                </a>
+                - {{interest.requester}}
+                {{ 'requested' if interest.post_type == 'Donate' else 'offered' }}
+                - {{interest.interest_status}}
+
+                {% if interest.interest_status == 'Pending' %}
+                    <form method = "post"
+                    action = "{{url_for('accept_interest', iid = interest.iid)}}">
+                    <button type="submit">Accept</button>
+                </form>
+                
+                <form method ="post"
+                action = "{{url_for('decline_interest', iid = interest.iid)}}">
+                <button type="submit">Decline</button>
+                </form>
+            {% endif %}
+        </li>
+    {% else %}
+            <li>No one has shown interest in your posts yet.</li>
+    {% endfor %}
+    </ul>
+</div>
+
+<div class = "profile-section">
+    <h2>Saved Posts</h2>
+    <ul>
+        {% for post in saved_posts %}
+            <li>
+                <a href = "{{url_for('post_detail', pid = post.pid)}}">
+                    {{post.title}}  
+                </a>
+                - {{post.status}}
+            </li>
+        {% else %}
+            <li>You have no saved posts.</li>
+        {% endfor %}
+    </ul>
+</div>
+
+{% endblock %}
