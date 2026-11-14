@@ -71,7 +71,7 @@ def change_post_status(conn, pid, status):
             set status=%s
             where pid=%s
         ''', [status, pid])
-        cons.commit()
+        conn.commit()
     return
 
 def get_interest_on_my_post(conn, uid):
