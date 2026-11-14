@@ -264,8 +264,10 @@ def profile(username):
             curs.execute('''SELECT * from posts where uid = %s and is_deleted = 0 and status in ('Completed', 'Fulfilled')
             order by posted_at desc''', [uid])
             archived_posts = curs.fetchall()
-        interests = get_interest_on_my_post(conn, uid)
-    return render_template('profile.html', page_title = f"{username}'s Profile", active_posts = active_posts, archieved_posts = archived_posts, interests = interests)
+            curs.execute('''SELECT posts.* from posts join saved_posts on posts.pid = saved_posts.pid where saved_posts.uid = %s and posts.is_deleted = 0 order by saved_posts.sid desc''', [uid])
+            saved_posts = curs.fetchall()
+            interests = get_interest_on_my_post(conn, uid)
+    return render_template('profile.html', page_title = f"{username}'s Profile", active_posts = active_posts, archived_posts = archived_posts, saved_posts = saved_posts, interests = interests)
 
 
 # Donate Listings & Request Posts Code

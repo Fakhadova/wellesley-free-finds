@@ -47,28 +47,52 @@
         {% endfor %}
     </ul>
 </div>
-<div class="interest-list">
+
+<!-- Interests in Posts -->
+ <div class="interest-list">
     <h2> Interests in My Posts</h2>
     <ul>
         {% for interest in interests %}
             <li>
-                <a href="{{ url_for('post_detail', pid=interest.post.pid) }}">
+                <a href="{{ url_for('post_detail', pid=interest.pid) }}">
                     {{interest.title}}
                 </a>
-                {{interest.requester}}
-                {{ 'requested' if i.post_type == 'Donate' else 'offered' }}
+                - {{interest.requester}}
+                {{ 'requested' if interest.post_type == 'Donate' else 'offered' }}
                 - {{interest.interest_status}}
 
-        {% if interest.interest_status == 'Pending' %}
-        < form method = "post"
-            action = {{url_for('accept_interest', 'iid = interest.iid')}} >
-            <button type="submit">Accept</button>
-        </form>
-        <form method ="post"
-        action = "{{url_for('decline_interest', iid = interest.iid)}}"
+                {% if interest.interest_status == 'Pending' %}
+                    <form method = "post"
+                    action = "{{url_for('accept_interest', iid = interest.iid)}}">
+                    <button type="submit">Accept</button>
+                </form>
+                
+                <form method ="post"
+                action = "{{url_for('decline_interest', iid = interest.iid)}}">
+                <button type="submit">Decline</button>
+                </form>
+            {% endif %}
+        </li>
+    {% else %}
+            <li>No one has shown interest in your posts yet.</li>
+    {% endfor %}
+    </ul>
+</div>
 
-
+<div class = "profile-section">
+    <h2>Saved Posts</h2>
+    <ul>
+        {% for post in saved_posts %}
+            <li>
+                <a href = "{{url_for('post_detail', pid = post.pid)}}">
+                    {{post.title}}  
+                </a>
+                - {{post.status}}
             </li>
         {% else %}
-            <li>No one has shown interest in your posts yet.</li>
+            <li>You have no saved posts.</li>
         {% endfor %}
+    </ul>
+</div>
+
+{% endblock %}
