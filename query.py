@@ -73,7 +73,20 @@ def change_post_status(conn, pid, status):
         ''', [status, pid])
         conn.commit()
     return
-
+def get_my_interest(conn, uid):
+    with dbi.dict_cursor(conn) as curs:
+        curs.execute('''
+            select i.iid,
+                   i.status as interest_status,
+                   p.uid as poster_id,
+                   p.pid, p.title, p.post_type,
+                   p.status as post_status
+            from interests i
+            inner join posts p
+                using (pid)
+            where i.uid=%s
+        ''',[uid])
+        return curs.fetchall()
 def get_interest_on_my_post(conn, uid):
     with dbi.dict_cursor(conn) as curs:
         curs.execute('''
