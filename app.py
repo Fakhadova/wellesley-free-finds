@@ -358,22 +358,38 @@ def post_detail(pid):
                            post=p, uid=uid, interest=interest)
 
 
-# Request Post Management: Allow owners to edit, delete, or mark Request posts as Fulfilled. Move Fulfilled posts to the owner's archive and close outstanding offers.
+# Request Post Management: Allow owners to edit, delete, or mark Request posts as Fulfilled. Move Fulfilled posts to the owner's archive and close outstanding offers. Maybe take them to edit_post_detail.html? with sessions though?
+#@app.route('/post/<int:pid>/edit/', methods = ['GET', 'POST'])
+#def edit_post(pid):
 @app.route('/post/<int:pid>/edit/', methods = ['GET', 'POST'])
 def edit_post(pid):
-    '''Allow owners to edith their Request posts.'''
     uid = session.get('uid')
-    if not uid:
-        flash('Please log in to edit your post.')
+    if not uid: 
+        flash ('Please log in to edit a post.')
         return redirect(url_for('index'))
-    with dbi.connect() as conn:
-        post = get_post_details(conn, pid)
-        if post is None:
-            flash("That post doesn't exist.")
-            return redirect(url_for('index'))
-        if post['uid'] != uid:
-            flash("You are not authorized to edit this post.")
-            return redirect(url_for('index'))
+    if request.method == 'GET':
+        with dbi.connect() as conn: 
+            post = get_post_details(conn, pid)
+            if post is None: 
+                flash("That post doesn't exist.")
+                return redirect(url_for('index'))
+            if post['uid'] != uid: 
+                flash("You are not authorized to edit this post.")
+                return redirect(url_for('index'))
+            return render_template('edit_post_detail.html', page_title = 'Edit Post', post = post, categories = CATEGORIES)
+    # POST request handling
+    form = request.form
+    title = form.get('title', '').strip()
+    description = form.get('description', '').strip()
+    categories = [c for c in form.getlist('category') if c in CATEGORIES]
+    errors = []
+    if not title or len(title) > 100: 
+        errors.append('Item name is required (max 100 characters).')
+        
+
+
+
+
 
 
 @app.route('/uploads/<path:filename>')
