@@ -48,28 +48,48 @@
     </ul>
 </div>
 
-<!-- My Interests in Posts -->
- <div class="my_interest_list">
+<div class="my_interest_list">
   <h2>My Requests &amp; Offers</h2>
-  {% if not my_interests %}
-    <p>You haven't requested or offered anything yet.</p>
-  {% endif %}
-  <ul>
-  {% for i in my_interests %}
+  {% if my_interests %}
+  <ul class="card-grid">
+    {% for i in my_interests %}
     <li>
-      <a href="{{ url_for('post_detail', pid=i.pid) }}">{{ i.title }}</a>
-      (posted by {{ i.poster }})
-      &middot; you {{ 'requested' if i.post_type == 'Donate' else 'offered' }}
-      &middot; {{ i.interest_status }}
+      <a class="card" href="{{ url_for('post_detail', pid=i.pid) }}">
+        <div class="card-photo">
+          {% if i.photo_filename %}
+            <img src="{{ url_for('uploaded_photo', filename=i.photo_filename) }}"
+                 alt="Photo of {{ i.title }}" loading="lazy">
+          {% else %}
+            <span class="no-photo">No photo :C </span>
+          {% endif %}
+        </div>
+        <div class="card-body">
+          <div class="tags">
+            <span class="tag tag-{{ i.post_type | lower }}">{{ i.post_type }}</span>
+            <span class="tag tag-{{ i.interest_status | lower }}">
+              {{ 'Request' if i.post_type == 'Donate' else 'Offer' }}: {{ i.interest_status }}
+            </span>
+          </div>
+          <h3>{{ i.title }}</h3>
+          <p class="card-cats">{{ i.category | category_labels | join(' · ') }}</p>
+          <p class="card-meta">Posted by {{ i.poster }} &middot; {{ i.posted_at.strftime('%b %d') }}</p>
+        </div>
+      </a>
 
       {% if i.interest_status in ('Pending', 'Accepted') %}
-      <form method="POST" action="{{ url_for('cancel_request', pid=i.pid) }}" style="display:inline">
-        <button type="submit">{{ 'Cancel Request' if i.post_type == 'Donate' else 'Withdraw Offer' }}</button>
+      <form class="card-actions" method="POST"
+            action="{{ url_for('cancel_request', pid=i.pid) }}">
+        <button type="submit">
+          {{ 'Cancel Request' if i.post_type == 'Donate' else 'Withdraw Offer' }}
+        </button>
       </form>
       {% endif %}
     </li>
-  {% endfor %}
+    {% endfor %}
   </ul>
+  {% else %}
+    <p>You haven't requested or offered anything yet.</p>
+  {% endif %}
 </div>
 
 <!-- Interests in Posts -->

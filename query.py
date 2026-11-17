@@ -79,9 +79,10 @@ def get_my_interests(conn, uid):
         curs.execute('''
             SELECT i.iid,
                    i.status   AS interest_status,
-                   p.pid, p.title, p.post_type,
+                   p.pid, p.title, p.post_type, p.category,p.posted_at,
                    p.status   AS post_status,
-                   u.username AS poster
+                   u.username AS poster,
+                   p.photo_filename
             FROM interests i
                 JOIN posts p USING (pid)
                 JOIN users u ON p.uid = u.uid
