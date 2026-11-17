@@ -26,6 +26,15 @@ HTML {
     font-style: italic;
 }
 
+.pink-btn {
+    background-color: #ff41f9; 
+    color: white;           
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
 
 h2, h3, h4, h5, h6 {
     color: var(--color-header);

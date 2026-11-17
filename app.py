@@ -110,9 +110,10 @@ def login():
 
 @app.route('/home/', endpoint='home')
 def home():
+    keyword = request.args.get('keyword', '').strip() #keyword is the search term the user puts in
     with dbi.connect() as conn:
-        posts = get_all_active_posts(conn)
-    return render_template('home.html', page_title='Home Page', posts=posts)
+        posts=get_all_active_posts(conn) and search_posts(conn, keyword)
+    return render_template('home.html', page_title='Home Page', posts=posts, keyword=keyword)
 
 @app.route('/user/<username>')
 def user(username=None):
