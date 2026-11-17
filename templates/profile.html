@@ -30,46 +30,6 @@
         {% endfor %}
     </ul>
 </div>
-<<<<<<< HEAD
-<div class="my_interest_list">
-    <h2>My Interest List</h2>
-    {% for i in my_interests %}
-        <li>
-        <a href="{{ url_for('post_detail', pid=i.pid) }}">{{ i.title }}</a>:
-        {{ i.requester }} {{ 'requested' if i.post_type == 'Donate' else 'offered' }}
-        &middot; {{ i.interest_status }}
-        <form
-            class='accept'
-            method="post"
-            action = "{{ url_for('cancel_request', pid=i.pid) }}">
-            <button type="submit">Withdraw Request</button>
-        </form>
-        </li>
-    {% endfor %}
-</div>
-<div class="my_post_interest_list">
-    <h2>Incoming Interest List</h2>
-    {% for i in incoming_interests %}
-        <li>
-        <a href="{{ url_for('post_detail', pid=i.pid) }}">{{ i.title }}</a>:
-        {{ i.requester }} {{ 'requested' if i.post_type == 'Donate' else 'offered' }}
-        &middot; {{ i.interest_status }}
-        <form
-            class='accept'
-            method="post"
-            action = "{{ url_for('accept_interest', iid=i.iid) }}">
-            <button type="submit">Accept Request</button>
-        </form>
-        <form
-            class='accept'
-            method="post"
-            action = "{{ url_for('decline_interest', iid=i.iid) }}">
-            <button type="submit">Decline Request</button>
-        </form>
-        </li>
-    {% endfor %}
-    {% endblock %}
-=======
 
 <!-- Archieved Posts: Completed, Fulfilled-->
 <div class="profile-section">
@@ -86,7 +46,30 @@
             <li>You have no archived posts.</li>
         {% endfor %}
     </ul>
->>>>>>> 3284c88b250e7d763789da0f7992f46eacbd18d6
+</div>
+
+<!-- My Interests in Posts -->
+ <div class="my_interest_list">
+  <h2>My Requests &amp; Offers</h2>
+  {% if not my_interests %}
+    <p>You haven't requested or offered anything yet.</p>
+  {% endif %}
+  <ul>
+  {% for i in my_interests %}
+    <li>
+      <a href="{{ url_for('post_detail', pid=i.pid) }}">{{ i.title }}</a>
+      (posted by {{ i.poster }})
+      &middot; you {{ 'requested' if i.post_type == 'Donate' else 'offered' }}
+      &middot; {{ i.interest_status }}
+
+      {% if i.interest_status in ('Pending', 'Accepted') %}
+      <form method="POST" action="{{ url_for('cancel_request', pid=i.pid) }}" style="display:inline">
+        <button type="submit">{{ 'Cancel Request' if i.post_type == 'Donate' else 'Withdraw Offer' }}</button>
+      </form>
+      {% endif %}
+    </li>
+  {% endfor %}
+  </ul>
 </div>
 
 <!-- Interests in Posts -->
@@ -107,7 +90,7 @@
                     action = "{{url_for('accept_interest', iid = interest.iid)}}">
                     <button type="submit">Accept</button>
                 </form>
-                
+
                 <form method ="post"
                 action = "{{url_for('decline_interest', iid = interest.iid)}}">
                 <button type="submit">Decline</button>
@@ -126,7 +109,7 @@
         {% for post in saved_posts %}
             <li>
                 <a href = "{{url_for('post_detail', pid = post.pid)}}">
-                    {{post.title}}  
+                    {{post.title}}
                 </a>
                 - {{post.status}}
             </li>
