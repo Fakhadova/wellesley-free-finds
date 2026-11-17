@@ -73,7 +73,24 @@ def change_post_status(conn, pid, status):
         ''', [status, pid])
         conn.commit()
     return
-
+def get_my_interests(conn, uid):
+    '''all requests/offers the user has made, with the poster's username'''
+    with dbi.dict_cursor(conn) as curs:
+        curs.execute('''
+            SELECT i.iid,
+                   i.status   AS interest_status,
+                   p.pid, p.title, p.post_type, p.category,p.posted_at,
+                   p.status   AS post_status,
+                   u.username AS poster,
+                   p.photo_filename
+            FROM interests i
+                JOIN posts p USING (pid)
+                JOIN users u ON p.uid = u.uid
+            WHERE i.uid = %s
+              AND p.is_deleted = 0
+            ORDER BY p.posted_at DESC
+        ''', [uid])
+        return curs.fetchall()
 def get_interest_on_my_post(conn, uid):
     with dbi.dict_cursor(conn) as curs:
         curs.execute('''
