@@ -88,7 +88,7 @@ def get_my_interests(conn, uid):
                 JOIN users u ON p.uid = u.uid
             WHERE i.uid = %s
               AND p.is_deleted = 0
-            ORDER BY p.posted_at DESC
+            ORDER BY i.status, p.posted_at DESC
         ''', [uid])
         return curs.fetchall()
 def get_interest_on_my_post(conn, uid):
