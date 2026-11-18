@@ -184,7 +184,6 @@ def search_posts(conn, keyword):
     ''', ['%' + keyword + '%'] + list(ARCHIVED_STATUSES))
     return curs.fetchall()
 
-# #Edit post from profile page - Allow owners to edit, delete, mark request posts as fufilled from their own posts from the active posts listed in their profile. Move fulfilled posts to the owner's archive and close outstanding offers.
 def update_post(conn, pid, title, description, categories, photo_filename=None):
     '''updates a post with a new title, description, categories, and optionally a new photo filename'''
     curs = dbi.cursor(conn)
@@ -194,4 +193,4 @@ def update_post(conn, pid, title, description, categories, photo_filename=None):
         where pid=%s and is_deleted=0
         ''', [title, description, ','.join(categories), photo_filename, pid])
         conn.commit()
-        
+
