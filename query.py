@@ -193,4 +193,5 @@ def update_post(conn, pid, title, description, categories, photo_filename=None):
         where pid=%s and is_deleted=0
         ''', [title, description, ','.join(categories), photo_filename, pid])
         conn.commit()
+        return
 
