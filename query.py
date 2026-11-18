@@ -194,4 +194,3 @@ def update_post(conn, pid, title, description, categories, photo_filename=None):
         ''', [title, description, ','.join(categories), photo_filename, pid])
     conn.commit()
     return
-
