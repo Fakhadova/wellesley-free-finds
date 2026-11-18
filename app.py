@@ -399,7 +399,7 @@ def edit_post(pid):
         #update post in database
         update_post(conn, pid, title, description, categories)
         flash('Your post has been updated.')
-        return redirect(url_for('post_detail', pid = pid))
+    return redirect(url_for('post_detail', pid = pid))
 
 
 
