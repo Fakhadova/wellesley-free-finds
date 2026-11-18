@@ -364,30 +364,43 @@ def post_detail(pid):
 #@app.route('/post/<int:pid>/edit/', methods = ['GET', 'POST'])
 #def edit_post(pid):
 @app.route('/post/<int:pid>/edit/', methods = ['GET', 'POST'])
-def edit_post(pid):
+#Edit post from profile page - Allow owners to edit, delete, mark request posts as fufilled from their own posts from the active posts listed in their profile. Move fulfilled posts to the owner's archive and close outstanding offers.
+def edit_post(pid): 
     uid = session.get('uid')
     if not uid: 
-        flash ('Please log in to edit a post.')
+        flash('Please log in to edit your post.')
         return redirect(url_for('index'))
-    if request.method == 'GET':
-        with dbi.connect() as conn: 
-            post = get_post_details(conn, pid)
-            if post is None: 
-                flash("That post doesn't exist.")
-                return redirect(url_for('index'))
-            if post['uid'] != uid: 
-                flash("You are not authorized to edit this post.")
-                return redirect(url_for('index'))
-            return render_template('edit_post_detail.html', page_title = 'Edit Post', post = post, categories = CATEGORIES)
-    # POST request handling
-    form = request.form
-    title = form.get('title', '').strip()
-    description = form.get('description', '').strip()
-    categories = [c for c in form.getlist('category') if c in CATEGORIES]
-    errors = []
-    if not title or len(title) > 100: 
-        errors.append('Item name is required (max 100 characters).')
-        
+    with dbi.connect() as conn: 
+        post = get_post_details(conn, pid)
+        if post is None: 
+            flash("That post doesn't exist.")
+            return redirect(url_for('index'))
+        if post['uid'] != uid: 
+            flash("You are not authorized to edit this post.")
+            return redirect(url_for('index'))
+        if request.method == 'GET': 
+            return render_template('edit_post.html', page_title = 'Edit Post', post = post, categories = CATEGORIES)
+        #option stuff for editing
+        form = request.form
+        title = form.get('title', '').strip()
+        description = form.get('description', '').strip()
+        categories = [c for c in form.getlist('category') if c in CATEGORIES]
+        errors = []
+        if not title or len(title) > 100: 
+            errors.append('Item name is required (max 100 characters).')
+        if not description or len(description) > 500:
+            errors.append('Description is required (max 500 characters).')
+        if not categories:
+            errors.append('Choose at least one category.')
+        if errors:
+            for e in errors: 
+                flash(e)
+                return render_template('edit_post.html', page_title = 'Edit Post', post = post, categories = CATEGORIES)
+        #update post in database
+        update_post(conn, pid, title, description, categories)
+        flash('Your post has been updated.')
+    return redirect(url_for('post_detail', pid = pid))
+
 
 
 
