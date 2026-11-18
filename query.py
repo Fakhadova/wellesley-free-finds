@@ -169,3 +169,17 @@ def get_post_details(conn, pid):
         where p.pid = %s and p.is_deleted = 0
     ''', [pid])
     return curs.fetchone()
+
+def search_posts(conn, keyword):
+    '''searches for posts with the keyword in title'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''
+        select p.pid, p.uid, u.username, p.post_type, p.title,
+               p.description, p.category, p.photo_filename, p.status,
+               p.posted_at
+        from posts p join users u using (uid)
+        where p.title like %s
+          and p.is_deleted = 0 and p.status not in (%s, %s)
+        order by p.posted_at desc
+    ''', ['%' + keyword + '%'] + list(ARCHIVED_STATUSES))
+    return curs.fetchall()

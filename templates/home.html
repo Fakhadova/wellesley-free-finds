@@ -6,7 +6,21 @@
   <p>Browse free items from your campus community, or see what others are looking for.</p>
 </header>
 
-{# Filter bar goes here #}
+{# our search form #}
+<form class="search-bar" method="get" action="">
+  <label for="search-keyword" class="sr-only">Search posts</label>
+  <input
+    id="search-keyword"
+    type="search"
+    name="keyword"
+    value="{{ keyword | default('') }}"
+    placeholder="Search for items...">
+  <button type="submit" class="pink-btn">Search</button>
+  {% if keyword %}
+    <a href="{{ url_for(request.endpoint) }}" class="button">Clear</a>
+  {% endif %}
+</form>
+
 
 <section class="listing">
   <p class="count">{{ posts | length }} item{{ '' if posts | length == 1 else 's' }}</p>
@@ -39,7 +53,9 @@
     {% endfor %}
   </ul>
   {% else %}
+  {# if nothing showed up in the search, or if there are no posts at all, both should not show up #}
     <p class="empty">Nothing has been posted yet.</p>
+    
   {% endif %}
 </section>
 {% endblock %}
