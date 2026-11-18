@@ -1,4 +1,4 @@
-/* the --color-header and others are CSS variables, which we access later. 
+/* the --color-header and others are CSS variables, which we access later.
    I chose these colors using https://venngage.com/tools/accessible-color-palette-generator
    I liked the contrasting palette2 colors.
 
@@ -6,7 +6,7 @@
 
    * the header (blue family) color is for headers and the background color of the nav bar buttons.
    * the nav bar will have white text on the header bgcolor
-   * the nav bar will use the focus (greenish) color for 
+   * the nav bar will use the focus (greenish) color for
 
 */
 
@@ -27,8 +27,8 @@ HTML {
 }
 
 .pink-btn {
-    background-color: #ff41f9; 
-    color: white;           
+    background-color: #ff41f9;
+    color: white;
     border: none;
     padding: 10px 20px;
     border-radius: 4px;
@@ -44,7 +44,7 @@ h1 {
     font-size: 200%;
     color: rgb(78, 193, 255)
 }
-    
+
 
 /* for a simple navbar. Talk to Scott if you want drop-downs. */
 nav > ul {
@@ -60,7 +60,7 @@ nav ul {
 
 nav > ul > li {
     flex: 0 0 auto;
-    width: 15em; 
+    width: 15em;
 }
 
 nav button, nav a {
@@ -200,8 +200,8 @@ body {
 }
 .tag-donate { background-color: #ffe0fd; color: #8a0a85; }
 .tag-request { background-color: #dff2ff; color: #0b5a8a; }
-.tag-available, .tag-open { background-color: #d9fbe8; color: #0b6b3a; }
-.tag-claimed { background-color: #fff1c7; color: #7a5600; }
+.tag-available, .tag-open, .tag-accepted { background-color: #d9fbe8; color: #0b6b3a; }
+.tag-claimed, .tag-withdrawn{ background-color: #fff1c7; color: #7a5600; }
 
 .card-cats, .card-meta {
     margin: 0;
@@ -212,7 +212,7 @@ body {
     text-overflow: ellipsis;
 }
 .card-meta {
-    margin-top: auto; 
+    margin-top: auto;
 }
 
 /* create post form css*/
