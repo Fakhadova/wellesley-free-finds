@@ -387,7 +387,15 @@ def edit_post(pid):
     errors = []
     if not title or len(title) > 100: 
         errors.append('Item name is required (max 100 characters).')
-        
+    if not description or len(description) > 500: 
+        errors.append('Description is required (max 500 characters).')
+    if not categories: 
+        errors.append('Choose at least one category.')
+    if errors: 
+        for e in errors: 
+            flash(e)
+    return render_template('edit_post_detail.html', page_title = 'Edit Post', post = {'pid': pid, 'title': title, 'description': description, 'categories': ','.join(categories)}, categories = CATEGORIES)       
+    
 
 
 
