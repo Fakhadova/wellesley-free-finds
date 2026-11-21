@@ -43,18 +43,6 @@ CREATE TABLE `comments` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `comments`
---
-
-LOCK TABLES `comments` WRITE;
-/*!40000 ALTER TABLE `comments` DISABLE KEYS */;
-INSERT INTO `comments` VALUES
-(1,1,2,NULL,'Does the lamp work?','2026-10-25 18:10:00'),
-(2,1,1,1,'Yes, it works!','2026-10-25 18:15:00');
-/*!40000 ALTER TABLE `comments` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `interests`
 --
 
@@ -75,18 +63,6 @@ CREATE TABLE `interests` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `interests`
---
-
-LOCK TABLES `interests` WRITE;
-/*!40000 ALTER TABLE `interests` DISABLE KEYS */;
-INSERT INTO `interests` VALUES
-(1,1,2,'Accepted'),
-(2,1,3,'Pending'),
-(3,2,1,'Pending');
-/*!40000 ALTER TABLE `interests` ENABLE KEYS */;
-UNLOCK TABLES;
-
 --
 -- Table structure for table `messages`
 --
@@ -191,19 +167,18 @@ CREATE TABLE `posts` (
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `posts`
---
+DROP TABLE IF EXISTS `picfile`;
+CREATE TABLE `picfile` (
+  `pid` int(11) NOT NULL,
+  `filename` varchar(255) NOT NULL,
+  `mimetype` varchar(50) NOT NULL,
+  `photo` mediumblob NOT NULL,
+  PRIMARY KEY (`pid`),
+  UNIQUE KEY `filename` (`filename`),
+  CONSTRAINT `picfile_ibfk_1` FOREIGN KEY (`pid`) REFERENCES `posts` (`pid`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
-LOCK TABLES `posts` WRITE;
-/*!40000 ALTER TABLE `posts` DISABLE KEYS */;
-INSERT INTO `posts` VALUES
-(1,1,'Donate','Desk Lamp','Working desk lamp in good condition','School_Supplies,Decorations_Furniture','lamp.jpg','Claimed',0,'2026-10-25 18:00:00'),
-(2,3,'Request','Mini Fridge','Looking for a small mini fridge','Kitchenware',NULL,'Open',0,'2026-10-25 18:30:00');
-/*!40000 ALTER TABLE `posts` ENABLE KEYS */;
-UNLOCK TABLES;
 
---
 -- Table structure for table `saved_posts`
 --
 
@@ -223,15 +198,6 @@ CREATE TABLE `saved_posts` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `saved_posts`
---
-
-LOCK TABLES `saved_posts` WRITE;
-/*!40000 ALTER TABLE `saved_posts` DISABLE KEYS */;
-INSERT INTO `saved_posts` VALUES
-(1,3,1);
-/*!40000 ALTER TABLE `saved_posts` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `users`
@@ -254,14 +220,6 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-LOCK TABLES `users` WRITE;
-/*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES
-(1,'student_a','student_a@wellesley.edu', '$2y$10$.vGA1O9wmRjrwAVXD98HNOgsNpDczlqm3Jq7KnEd1rVAGv3Fykk1a'),
-(2,'student_b','student_b@wellesley.edu', '$2y$10$.vGA1O9wmRjrwAVXD98HNOgsNpDczlqm3Jq7KnEd1rVAGv3Fykk1b'),
-(3,'student_c','student_c@wellesley.edu', '$2y$10$.vGA1O9wmRjrwAVXD98HNOgsNpDczlqm3Jq7KnEd1rVAGv3Fykk1c');
-/*!40000 ALTER TABLE `users` ENABLE KEYS */;
-UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

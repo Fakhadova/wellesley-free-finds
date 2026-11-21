@@ -82,10 +82,11 @@ def get_my_interests(conn, uid):
                    p.pid, p.title, p.post_type, p.category,p.posted_at,
                    p.status   AS post_status,
                    u.username AS poster,
-                   p.photo_filename
+                   f.filename AS photo_filename
             FROM interests i
                 JOIN posts p USING (pid)
                 JOIN users u ON p.uid = u.uid
+                LEFT JOIN picfile f ON f.pid = p.pid
             WHERE i.uid = %s
               AND p.is_deleted = 0
             ORDER BY i.status, p.posted_at DESC
@@ -126,17 +127,38 @@ CATEGORIES={
 INITIAL_STATUS = {'Donate':'Available','Request':'Open'}
 #the statuses that are archived and hidden from Home
 ARCHIVED_STATUSES = ('Completed','Fulfilled')
-def add_post(conn, uid, post_type, title, description, categories, photo_filename=None):
-    '''inserts a new post (donate or request) and returns the pid'''
+def add_post(conn, uid, post_type, title, description, categories):
+    '''inserts a new post (donate or request) and returns the pid.
+    the photo is stored separately in picfile (see add_photo)'''
     curs=dbi.cursor(conn)
     curs.execute('''
         insert into posts (uid, post_type, title, description, category,
-                           photo_filename, status, is_deleted, posted_at)
-        values (%s, %s, %s, %s, %s, %s, %s, 0, now())
+                           status, is_deleted, posted_at)
+        values (%s, %s, %s, %s, %s, %s, 0, now())
     ''', [uid, post_type, title, description, ','.join(categories),
-          photo_filename, INITIAL_STATUS[post_type]])
+          INITIAL_STATUS[post_type]])
     conn.commit()
     return curs.lastrowid
+
+def add_photo(conn, pid, filename, mimetype, data):
+    '''stores a post's photo (the image bytes themselves) in picfile.
+    one photo per post; storing it in the shared DB means everyone sees it'''
+    curs=dbi.cursor(conn)
+    curs.execute('''
+        insert into picfile (pid, filename, mimetype, photo)
+        values (%s, %s, %s, %s)
+        on duplicate key update filename=values(filename),
+            mimetype=values(mimetype), photo=values(photo)
+    ''', [pid, filename, mimetype, data])
+    conn.commit()
+
+def get_photo(conn, filename):
+    '''returns {mimetype, photo} for a photo filename, or None'''
+    curs=dbi.dict_cursor(conn)
+    curs.execute('''
+        select mimetype, photo from picfile where filename = %s
+    ''', [filename])
+    return curs.fetchone()
 
 def get_all_active_posts(conn):
     '''all posts shown in home with newest first.
@@ -144,9 +166,10 @@ def get_all_active_posts(conn):
     curs=dbi.dict_cursor(conn)
     curs.execute('''
         select p.pid, p.uid, u.username, p.post_type, p.title,
-               p.description, p.category, p.photo_filename, p.status,
-               p.posted_at
+               p.description, p.category, f.filename as photo_filename,
+               p.status, p.posted_at
         from posts p join users u using (uid)
+                     left join picfile f using (pid)
         where p.is_deleted = 0 and p.status not in (%s, %s)
         order by p.posted_at desc
     ''', list(ARCHIVED_STATUSES))
@@ -164,8 +187,11 @@ def get_post_details(conn, pid):
     '''returns a non-deleted post with its author's username, im assuming we need this later'''
     curs = dbi.dict_cursor(conn)
     curs.execute('''
-        select p.*, u.username
+        select p.pid, p.uid, u.username, p.post_type, p.title,
+               p.description, p.category, f.filename as photo_filename,
+               p.status, p.is_deleted, p.posted_at
         from posts p join users u using (uid)
+                     left join picfile f using (pid)
         where p.pid = %s and p.is_deleted = 0
     ''', [pid])
     return curs.fetchone()
@@ -175,9 +201,10 @@ def search_posts(conn, keyword):
     curs = dbi.dict_cursor(conn)
     curs.execute('''
         select p.pid, p.uid, u.username, p.post_type, p.title,
-               p.description, p.category, p.photo_filename, p.status,
-               p.posted_at
+               p.description, p.category, f.filename as photo_filename,
+               p.status, p.posted_at
         from posts p join users u using (uid)
+                     left join picfile f using (pid)
         where p.title like %s
           and p.is_deleted = 0 and p.status not in (%s, %s)
         order by p.posted_at desc

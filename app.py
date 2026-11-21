@@ -1,5 +1,5 @@
 from flask import (Flask, render_template, make_response, url_for, request,
-                   redirect, flash, session, send_from_directory)
+                   redirect, flash, session, send_from_directory, Response, abort)
 app = Flask(__name__)
 
 import os
@@ -19,10 +19,8 @@ app.secret_key = secrets.token_hex()
 # This gets us better error messages for certain common request errors
 app.config['TRAP_BAD_REQUEST_ERRORS'] = True
 
-#photo uploads for posts
-app.config['UPLOADS']=os.path.join(app.root_path, 'uploads')
+#photo uploads for posts (photos are stored in the picfile table, not on disk)
 app.config['MAX_CONTENT_LENGTH']=5 * 1024 * 1024
-os.makedirs(app.config['UPLOADS'],exist_ok=True)
 
 
 @app.route('/')
@@ -287,16 +285,25 @@ def photo_too_large(err):
     return redirect(url_for('post'))
 
 
-def save_photo(file):
-    """this saves an uploaded photo under a random name and returns the filename or returns none"""
+def photo_extension(file):
+    """returns the photo's lowercase extension, or None if no file was chosen.
+    raises ValueError if it isn't an allowed image type"""
     if file is None or file.filename=='':
         return None
     ext=file.filename.rsplit('.', 1)[-1].lower()
     if '.' not in file.filename or ext not in ALLOWED_PHOTO_EXTENSIONS:
         raise ValueError('Photo must be a JPG, PNG, GIF, or WEBP image.')
-    filename=secure_filename(f'{secrets.token_hex(8)}.{ext}')
-    file.save(os.path.join(app.config['UPLOADS'], filename))
-    return filename
+    return ext
+
+
+PHOTO_MIMETYPES = {'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png',
+                   'gif': 'image/gif', 'webp': 'image/webp'}
+
+
+def save_photo(conn, pid, file, ext):
+    """stores the photo's bytes in picfile under the name <pid>.<ext>"""
+    filename=secure_filename(f'{pid}.{ext}')
+    add_photo(conn, pid, filename, PHOTO_MIMETYPES[ext], file.read())
 
 
 @app.route('/post/', methods=['GET', 'POST'])
@@ -326,10 +333,10 @@ def post():
         errors.append('Choose at least one category.')
     if post_type == 'Donate' and (photo is None or photo.filename == ''):
         errors.append('Donate posts require a photo.')
-    photo_filename=None
+    ext=None
     if not errors:
         try:
-            photo_filename=save_photo(photo)
+            ext=photo_extension(photo) #check the photo type BEFORE creating the post
         except ValueError as err:
             errors.append(str(err))
     if errors:
@@ -341,7 +348,9 @@ def post():
                                chosen=categories)
     with dbi.connect() as conn:
         pid=add_post(conn, uid, post_type, title, description, #now we add the post and it will return the pid
-                       categories, photo_filename)
+                       categories)
+        if ext:
+            save_photo(conn, pid, photo, ext) #photo is named after the pid, so it's saved after the post
     flash(f'Your {post_type.lower()} post was created!')
     return redirect(url_for('post_detail', pid=pid)) #i'm thinking like in the movies, we redirect to their new post page
 
@@ -394,9 +403,14 @@ def edit_post(pid):
 
 
 
-@app.route('/uploads/<path:filename>')
+@app.route('/uploads/<filename>')
 def uploaded_photo(filename):
-    return send_from_directory(app.config['UPLOADS'], filename) #shows photo like in our exercise
+    """sends a post's photo straight from the picfile table"""
+    with dbi.connect() as conn:
+        row=get_photo(conn, filename)
+    if row is None:
+        abort(404)
+    return Response(row['photo'], mimetype=row['mimetype'])
 
 if __name__ == '__main__':
     import sys, os
