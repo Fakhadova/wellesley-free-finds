@@ -6,21 +6,64 @@
   <p>Browse free items from your campus community, or see what others are looking for.</p>
 </header>
 
-{# our search form #}
-<form class="search-bar" method="get" action="">
-  <label for="search-keyword" class="sr-only">Search posts</label>
-  <input
-    id="search-keyword"
-    type="search"
-    name="keyword"
-    value="{{ keyword | default('') }}"
-    placeholder="Search for items...">
-  <button type="submit" class="pink-btn">Search</button>
-  {% if keyword %}
-    <a href="{{ url_for(request.endpoint) }}" class="button">Clear</a>
-  {% endif %}
-</form>
+{# search + filter + sort bar. It's a GET form, so the choices stay in the URL #}
+<form class="filter-bar" id="filter-bar" method="get" action="{{ url_for('home') }}">
+  <div class="filter-row">
+    <label for="search-keyword" class="sr-only">Search posts</label>
+    <input id="search-keyword" type="search" name="keyword"
+           value="{{ filters.keyword }}" placeholder="Search for items...">
+    <button type="submit" class="pink-btn">Search</button>
+  </div>
 
+  <div class="filter-row">
+    <label class="filter-select">Type
+      <select name="post_type">
+        <option value="">All posts</option>
+        <option value="Donate" {% if filters.post_type == 'Donate' %}selected{% endif %}>Donations</option>
+        <option value="Request" {% if filters.post_type == 'Request' %}selected{% endif %}>Requests</option>
+      </select>
+    </label>
+    <label class="filter-select">Sort
+      <select name="sort">
+        <option value="newest">Newest first</option>
+        <option value="oldest" {% if filters.sort == 'oldest' %}selected{% endif %}>Oldest first</option>
+      </select>
+    </label>
+  </div>
+
+  <fieldset class="filter-group">
+    <legend>Status</legend>
+    <div class="chip-picker">
+      {% for st in active_statuses %}
+      <label class="chip-option">
+        <input type="checkbox" name="status" value="{{ st }}"
+               {% if st in filters.statuses %}checked{% endif %}>
+        <span>{{ st }}</span>
+      </label>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <fieldset class="filter-group">
+    <legend>Categories</legend>
+    <div class="chip-picker">
+      {% for value, label in categories.items() %}
+      <label class="chip-option">
+        <input type="checkbox" name="category" value="{{ value }}"
+               {% if value in filters.categories %}checked{% endif %}>
+        <span>{{ label }}</span>
+      </label>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <div class="filter-actions">
+    <button type="submit" class="pink-btn" id="apply-filters">Apply filters</button>
+    {% if filtering or filters.sort == 'oldest' %}
+      <a href="{{ url_for('home') }}" class="clear-link">Clear all</a>
+    {% endif %}
+  </div>
+</form>
 
 <section class="listing">
   <p class="count">{{ posts | length }} item{{ '' if posts | length == 1 else 's' }}</p>
@@ -53,9 +96,23 @@
     {% endfor %}
   </ul>
   {% else %}
-  {# if nothing showed up in the search, or if there are no posts at all, both should not show up #}
-    <p class="empty">Nothing has been posted yet.</p>
+    {% if filtering %}
+      <p class="empty">No posts match your search or filters. <a href="{{ url_for('home') }}">Clear all</a></p>
+    {% else %}
+      <p class="empty">Nothing has been posted yet.</p>
+    {% endif %}
     
   {% endif %}
 </section>
+{% endblock %}
+
+{% block end_scripts %}
+<script>
+// apply filters right away when a dropdown or chip changes
+// (the Apply button stays for people without JavaScript)
+$('#filter-bar select, #filter-bar input[type=checkbox]').on('change', function () {
+    $('#filter-bar').submit();
+});
+$('#apply-filters').hide();
+</script>
 {% endblock %}

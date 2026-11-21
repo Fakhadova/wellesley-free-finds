@@ -460,3 +460,84 @@ body {
     .create-card { padding: 0 1em 1.25em; }
     .create-header { margin: 0 -1em; padding: 1.1em 1em; }
 }
+
+/* ===================== Home search / filter bar ===================== */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.filter-bar {
+    background-color: white;
+    border: 1px solid #e3e3e3;
+    border-radius: 12px;
+    padding: 0.9em 1em;
+    margin-bottom: 1.25em;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75em;
+}
+.filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6em;
+    align-items: center;
+}
+.filter-row input[type=search] {
+    flex: 1;
+    min-width: 12em;
+    font-family: var(--font-family);
+    font-size: 0.95em;
+    padding: 0.6em 0.8em;
+    border: 2px solid #e5e5e5;
+    border-radius: 10px;
+}
+.filter-row input[type=search]:focus {
+    outline: none;
+    border-color: var(--color-header);
+}
+.filter-select {
+    font-size: 0.85em;
+    font-weight: bold;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+}
+.filter-select select {
+    font-family: var(--font-family);
+    padding: 0.35em 0.5em;
+    border: 2px solid #e5e5e5;
+    border-radius: 8px;
+    background-color: white;
+}
+.filter-group {
+    border: none;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+}
+.filter-group legend {
+    font-size: 0.85em;
+    font-weight: bold;
+    color: #333;
+    padding: 0;
+    margin-bottom: 0.4em;
+}
+.filter-bar .chip-option span {
+    font-size: 0.75em;
+    padding: 0.3em 0.7em;
+}
+.filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 1em;
+}
+.clear-link {
+    font-size: 0.85em;
+    color: var(--color-header);
+}

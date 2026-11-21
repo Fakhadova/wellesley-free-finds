@@ -160,28 +160,76 @@ def get_photo(conn, filename):
     ''', [filename])
     return curs.fetchone()
 
-def get_all_active_posts(conn):
-    '''all posts shown in home with newest first.
-    excludes deleted and archived posts'''
-    curs=dbi.dict_cursor(conn)
-    curs.execute('''
-        select p.pid, p.uid, u.username, p.post_type, p.title,
-               p.description, p.category, f.filename as photo_filename,
-               p.status, p.posted_at
-        from posts p join users u using (uid)
-                     left join picfile f using (pid)
-        where p.is_deleted = 0 and p.status not in (%s, %s)
-        order by p.posted_at desc
-    ''', list(ARCHIVED_STATUSES))
+#statuses a post can have while it still shows on Home (used by the filter)
+ACTIVE_STATUSES = ('Available', 'Claimed', 'Open')
+
+
+def search_posts(conn, keyword, post_type, sort):
+    '''gets the home posts from the db matching the search keyword
+    and post type.'''
+    search= '%' + keyword + '%'
+    curs= dbi.dict_cursor(conn)
+    if sort== 'oldest':
+        curs.execute('''
+            select p.pid, p.uid, u.username, p.post_type, p.title,
+                   p.description, p.category, f.filename as photo_filename,
+                   p.status, p.posted_at
+            from posts p join users u using (uid)
+                         left join picfile f using (pid)
+            where p.is_deleted = 0
+              and p.status not in ('Completed', 'Fulfilled')
+              and (p.title like %s or p.description like %s)
+              and (%s = '' or p.post_type = %s)
+            order by p.posted_at asc
+        ''', [search, search, post_type, post_type])
+    else:
+        curs.execute('''
+            select p.pid, p.uid, u.username, p.post_type, p.title,
+                   p.description, p.category, f.filename as photo_filename,
+                   p.status, p.posted_at
+            from posts p join users u using (uid)
+                         left join picfile f using (pid)
+            where p.is_deleted = 0
+              and p.status not in ('Completed', 'Fulfilled')
+              and (p.title like %s or p.description like %s)
+              and (%s = '' or p.post_type = %s)
+            order by p.posted_at desc
+        ''', [search, search, post_type, post_type])
     return curs.fetchall()
 
-def get_active_posts(conn):
-    '''same posts as get_all_active_posts but split into donate or request'''
-    donate=[]
-    request=[]
-    for post in get_all_active_posts(conn):
-        (donate if post['post_type']=='Donate' else request).append(post)
-    return donate, request
+
+def filter_by_categories(posts, categories):
+    '''keeps only posts that have at least one of the categories
+    if no categories were chosen then all posts are kept'''
+    if not categories:
+        return posts
+    kept= []
+    for post in posts:
+        post_categories= post['category'].split(',')   
+        for category in categories:
+            if category in post_categories:
+                kept.append(post)
+                break   #already kept this post, no need to check the rest
+    return kept
+
+
+def filter_by_statuses(posts, statuses):
+    '''keeps only posts whose status was chosen-
+    if no statuses were chosen then all posts are kept'''
+    if not statuses:
+        return posts
+    kept= []
+    for post in posts:
+        if post['status'] in statuses:
+            kept.append(post)
+    return kept
+def get_all_active_posts(conn, keyword='', post_type='', categories=[],
+                         statuses=[], sort='newest'):
+    '''returns the posts shown on home after search, filter and sort'''
+    posts = search_posts(conn, keyword, post_type, sort)
+    posts = filter_by_categories(posts, categories)
+    posts = filter_by_statuses(posts, statuses)
+    return posts
 
 def get_post_details(conn, pid):
     '''returns a non-deleted post with its author's username, im assuming we need this later'''
@@ -195,21 +243,6 @@ def get_post_details(conn, pid):
         where p.pid = %s and p.is_deleted = 0
     ''', [pid])
     return curs.fetchone()
-
-def search_posts(conn, keyword):
-    '''searches for posts with the keyword in title'''
-    curs = dbi.dict_cursor(conn)
-    curs.execute('''
-        select p.pid, p.uid, u.username, p.post_type, p.title,
-               p.description, p.category, f.filename as photo_filename,
-               p.status, p.posted_at
-        from posts p join users u using (uid)
-                     left join picfile f using (pid)
-        where p.title like %s
-          and p.is_deleted = 0 and p.status not in (%s, %s)
-        order by p.posted_at desc
-    ''', ['%' + keyword + '%'] + list(ARCHIVED_STATUSES))
-    return curs.fetchall()
 
 def update_post(conn, pid, title, description, categories, photo_filename=None):
     '''updates a post with a new title, description, categories, and optionally a new photo filename'''

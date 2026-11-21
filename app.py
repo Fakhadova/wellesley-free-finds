@@ -6,7 +6,6 @@ import os
 import cs304dbi as dbi
 import pymysql
 import secrets
-app.secret_key = secrets.token_hex()
 
 from pwd_context import hash_password, verify_password
 from werkzeug.utils import secure_filename
@@ -26,9 +25,10 @@ app.config['MAX_CONTENT_LENGTH']=5 * 1024 * 1024
 
 @app.route('/')
 def index():
-    with dbi.connect() as conn:
-        donate_posts,request_posts=get_active_posts(conn) #shows posts on the front page
-    return render_template('main.html', page_title='Main Page', donate_posts=donate_posts, request_posts=request_posts)
+    #making sure log-ined users are sent to home
+    if session.get('uid'):
+        return redirect(url_for('home'))
+    return render_template('main.html', page_title='Main Page')
 
 
 @app.route('/register/', methods=["POST"])
@@ -68,7 +68,7 @@ def register():
             session['logged_in'] = True
             session['visits'] = 1
             flash("Account created successfully.")
-            return redirect(url_for('index'))
+            return redirect(url_for('home'))
 
 @app.route('/login/', methods=["POST"])
 def login():
@@ -109,10 +109,22 @@ def login():
 
 @app.route('/home/', endpoint='home')
 def home():
-    keyword = request.args.get('keyword', '').strip() #keyword is the search term the user puts in
+    #search and filter functionality for the home page
+    filters= {
+        'keyword': request.args.get('keyword', '').strip(), #our search term
+        'post_type': request.args.get('post_type', ''),
+        'categories': request.args.getlist('category'),
+        'statuses': request.args.getlist('status'),
+        'sort': request.args.get('sort', 'newest'),
+    }
     with dbi.connect() as conn:
-        posts=get_all_active_posts(conn) and search_posts(conn, keyword)
-    return render_template('home.html', page_title='Home Page', posts=posts, keyword=keyword)
+        posts= get_all_active_posts(conn, **filters)
+    #making this true if the user used search or filter so the "clear" button shows up
+    filtering= bool(filters['keyword'] or filters['post_type']
+                     or filters['categories'] or filters['statuses'])
+    return render_template('home.html', page_title='Home Page', posts=posts,
+                           filters=filters, filtering=filtering,
+                           categories=CATEGORIES, active_statuses=ACTIVE_STATUSES)
 
 @app.route('/user/<username>')
 def user(username=None):
