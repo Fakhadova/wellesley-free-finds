@@ -61,7 +61,7 @@
 
 
 {# Save or unsave the current post #}
-{% if uid %}
+{% if uid and post.uid != uid %}
 {% if is_saved %}
     <form method="POST"
           action="{{ url_for('unsave_post', pid=post.pid) }}">
