@@ -25,6 +25,7 @@ app.config['MAX_CONTENT_LENGTH']=5 * 1024 * 1024
 
 @app.route('/')
 def index():
+    '''Displays the login page or redirects logged-in users to Home'''
     #making sure log-ined users are sent to home
     if session.get('uid'):
         return redirect(url_for('home'))
@@ -72,6 +73,7 @@ def register():
 
 @app.route('/login/', methods=["POST"])
 def login():
+    """Authenticates a user and stores their information in the session."""
     username = request.form.get('username', '').strip()
     passwd = request.form.get('password', '')
     # should use a helper function
@@ -148,6 +150,7 @@ def user(username=None):
 
 @app.route('/logout/', methods=['POST'])
 def logout():
+    """Logs out the current user by clearing their session."""
     if 'username' in session:
         username = session['username']
         session.clear()         # this pops all values
@@ -193,7 +196,7 @@ def cancel_request(pid):
         if post is None:
             flash("Post doesn't exist")
             return redirect(url_for('index'))
-        #user trying to cancell request on their own post
+        #user trying to cancel request on their own post
         if post['uid'] == uid:
             flash("You can't cancel request to your own post")
             return redirect(url_for('index'))
@@ -271,6 +274,7 @@ def decline_interest(iid):
 @app.route('/profile/<username>')
 # Profile (Team Member 1): Display the current user's Donate and Request posts in Profile.
 def profile(username):
+    """Displays the user's active, archived, and saved posts, along with their requests and offers."""
     if 'username' not in session or session['username'] != username:
         flash('You are not authorized to view this profile.')
         return redirect(url_for('index'))
@@ -404,12 +408,10 @@ def post_detail(pid):
                            post=p, uid=uid, interest=interest, is_saved = is_saved)
 
 
-# Request Post Management: Allow owners to edit, delete, or mark Request posts as Fulfilled. Move Fulfilled posts to the owner's archive and close outstanding offers. Maybe take them to edit_post_detail.html? with sessions though?
-#@app.route('/post/<int:pid>/edit/', methods = ['GET', 'POST'])
-#def edit_post(pid):
+
 @app.route('/post/<int:pid>/edit/', methods = ['GET', 'POST'])
-#Edit post from profile page - Allow owners to edit, delete, mark request posts as fufilled from their own posts from the active posts listed in their profile. Move fulfilled posts to the owner's archive and close outstanding offers.
 def edit_post(pid):
+    """Allows the owner to edit an Open Request post."""
     uid = session.get('uid')
     if not uid:
         flash('Please log in to edit your post.')
@@ -492,6 +494,7 @@ def uploaded_photo(filename):
 
 @app.route('/post/<int:pid>/fulfill/', methods = ['POST'])
 def fulfill_request_post(pid):
+    """Marks an Open Request post as Fulfilled and closes outstanding offers."""
     uid = session.get('uid')
     if not uid: 
         flash('Please log in first.')
@@ -513,6 +516,7 @@ def fulfill_request_post(pid):
 
 @app.route('/post/<int:pid>/delete/', methods = ['POST'])
 def delete_request(pid):
+    """Deletes a Request post and closes its outstanding offers."""
     uid= session.get('uid')
     if not uid: 
         flash('Please log in first.')
@@ -534,6 +538,7 @@ def delete_request(pid):
 
 @app.route('/post/<int:pid>/save/', methods = ['POST'])
 def save_post(pid):
+    """Saves a post to the current user's saved posts."""
     uid = session.get('uid')
     if not uid: 
         flash("Please log in first.")
@@ -552,6 +557,7 @@ def save_post(pid):
 
 @app.route('/post/<int:pid>/unsave/', methods=['POST'])
 def unsave_post(pid):
+    """Removes a post from the current user's saved posts."""
     uid = session.get('uid')
     if not uid:
         flash('Please log in first.')

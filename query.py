@@ -93,6 +93,7 @@ def get_my_interests(conn, uid):
         ''', [uid])
         return curs.fetchall()
 def get_interest_on_my_post(conn, uid):
+    """Returns pending and accepted requests or offers on the user's posts."""
     with dbi.dict_cursor(conn) as curs:
         curs.execute('''
             SELECT i.iid,
@@ -255,8 +256,8 @@ def update_post(conn, pid, title, description, categories):
     conn.commit()
 
 def mark_request_fulfilled(conn, pid):
-    '''marks a Request post as fufilled and closes its offers'''
-    with dbi.cursor(conn) as curs: 
+    """Marks a Request post as Fulfilled and closes its outstanding offers."""
+        with dbi.cursor(conn) as curs: 
         curs.execute('''
         update posts 
         set status = 'Fulfilled'
@@ -272,7 +273,7 @@ def mark_request_fulfilled(conn, pid):
     conn.commit()
 
 def delete_request_post(conn, pid): 
-    '''soft deletes a Request post and closess its offers'''
+    '''Soft deletes a Request post and closess its offers'''
     with dbi.cursor(conn) as curs:
         curs.execute('''
         update posts 
