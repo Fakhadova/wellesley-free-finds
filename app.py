@@ -412,7 +412,7 @@ def edit_post(pid):
             return redirect(url_for('post_detail', pid=pid))
 
         if request.method == 'GET':
-            return render_termplate(
+            return render_template(
                 'edit_post.html', 
                 post = post,
                 categories = CATEGORIES,
@@ -424,6 +424,7 @@ def edit_post(pid):
         title = form.get('title', '').strip()
         description = form.get('description', '').strip()
         categories = [c for c in form.getlist('category') if c in CATEGORIES]
+        photo = request.files.get('photo')
         errors = []
         
         if not title or len(title) > 100:
@@ -438,7 +439,7 @@ def edit_post(pid):
         #A new photo is optional
         ext = None
         try: 
-            ext = photo_extention(photo)
+            ext = photo_extension(photo)
         except ValueError as err:
             errors.append(str(err))
 
@@ -458,12 +459,6 @@ def edit_post(pid):
     flash('Your post has been updated.')
     return redirect(url_for('post_detail', pid = pid))
 
-
-
-
-
-
-
 @app.route('/uploads/<filename>')
 def uploaded_photo(filename):
     """sends a post's photo straight from the picfile table"""
@@ -472,6 +467,48 @@ def uploaded_photo(filename):
     if row is None:
         abort(404)
     return Response(row['photo'], mimetype=row['mimetype'])
+
+@app.route('/post/<int:pid>/fulfill/', methods = ['POST'])
+def fulfill_request_post(pid):
+    uid = session.get('uid')
+    if not uid: 
+        flash('Please log in first.')
+        return redirect(url_for('index'))
+    with dbi.connect() as conn: 
+        post = get_post_details(conn, pid)
+        if post is None: 
+            abort(404)
+        if post['uid'] != uid or post['post_type'] != 'Request':
+            abort(403)
+        
+        if post['status'] != 'Open':
+            flash('This post cannot be marked fulfilled.')
+            return redirect(url_for('post_detail', pid = pid))
+
+        mark_request_fulfilled(conn, pid) 
+    flash("Your request post has been marked fulfilled.")
+    return redirect(url_for('profile', username=session['username']))
+
+@app.route('/post<int:pid>/delete/', methods = ['POST'])
+def delete_request(pid):
+    uid= session.get('uid')
+    if not uid: 
+        flash('Please log in first.')
+        return redirect (url_for('index'))
+    
+    with dbi.connect() as conn: 
+        post = get_post_details(conn, pid)
+
+        if post is none: 
+            abort(404)
+        
+        if post['uid'] != uid or post['post_type'] != 'Request':
+            abort(403)
+        
+        delete_request_post(conn, pid)
+    
+    flash('Your post has been deleted.')
+    return redirect(url_for('profile', username = session['username']))
 
 if __name__ == '__main__':
     import sys, os

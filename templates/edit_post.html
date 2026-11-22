@@ -13,7 +13,7 @@
     enctype="multipart/form-data">
 
         <label for="title">Item Name:</label>
-        <input type="text" id="title" name="title" value="{form.get('title', post.title)}" 
+        <input type="text" id="title" name="title" value="{{form.get('title', post.title)}}" 
         maxlength = "100" required>
 
         <label for="description">Description:</label>

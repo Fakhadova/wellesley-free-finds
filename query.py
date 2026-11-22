@@ -246,10 +246,44 @@ def get_post_details(conn, pid):
 
 def update_post(conn, pid, title, description, categories):
     '''updates a post with a new title, description and categories'''
-    with dbi.curson(conn) as curs:
+    with dbi.cursor(conn) as curs:
         curs.execute('''
             update posts
             set title=%s, description=%s, category=%s
             where pid = %s and is_deleted = 0''',
             [title, description, ','.join(categories), pid])
+    conn.commit()
+
+def mark_request_fulfilled(conn, pid):
+    '''marks a Request post as fufilled and closes its offers'''
+    with dbi.curson(conn) as curs: 
+        curs.execute('''
+        update posts 
+        set status = 'Fulfilled'
+        where pid = %s and post_type = 'Request'
+        and is_deleted = 0''', 
+        [pid])
+
+        curs.execute('''
+        update interests
+        set status = 'Closed'
+        where pid = %s and status in 
+        ('Pending', 'Accepted')''', [pid])
+    conn.commit()
+
+def delete_request_post(conn, pid): 
+    '''soft deletes a Request post and closess its offers'''
+    with dbi.cursor(conn) as curs:
+        curs.execute('''
+        update posts 
+        set is_deleted = 1
+        where pid=%s and post_type = 'Request'
+        and is_deleted = 0''', 
+        [pid])
+
+        curs.execute('''
+        update interests
+        set status = 'Closed'
+        where pid = %s and status in ('Pending', 'Accepted')
+        ''', [pid])
     conn.commit()
