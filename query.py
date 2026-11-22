@@ -287,3 +287,29 @@ def delete_request_post(conn, pid):
         where pid = %s and status in ('Pending', 'Accepted')
         ''', [pid])
     conn.commit()
+
+def is_saved_post(conn, uid, pid):
+    '''checks whether a user has saved a post'''
+    with dbi.dict_cursor(conn) as curs:
+        curs.execute('''select side from saved_posts
+        where uid = %s and pid=%s''', [uid, pid])
+        return curs.fetchone() is not None
+
+def add_saved_post(conn, uid, pid):
+    '''saves a post if the user hasn't already saved it'''
+    if not is_saved_post(conn, uid, pid):
+        with dbi.cursor(conn) as curs:
+            curs.execute('''
+                insert into saved_posts (uid, pid)
+                values (%s, %s)
+            ''', [uid, pid])
+        conn.commit()
+
+def remove_saved_post(conn, uid, pid):
+    '''removes a post from the user's saved posts'''
+    with dbi.curson(conn) as curs: 
+        curs.execute(''' 
+        delete from saved_posts
+        where uid=%s and pid=%s''', 
+        [uid, pid])
+    conn.commit()

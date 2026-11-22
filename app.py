@@ -378,8 +378,9 @@ def post_detail(pid):
             flash("That post doesn't exist.")
             return redirect(url_for('index'))
         interest = get_interest_bypid(conn, pid, uid) if uid else None
+        is_saved = is_saved_post(conn, uid, pid) if uid else False
     return render_template('post_detail.html', page_title=p['title'],
-                           post=p, uid=uid, interest=interest)
+                           post=p, uid=uid, interest=interest, is_saved = is_saved)
 
 
 # Request Post Management: Allow owners to edit, delete, or mark Request posts as Fulfilled. Move Fulfilled posts to the owner's archive and close outstanding offers. Maybe take them to edit_post_detail.html? with sessions though?
@@ -509,6 +510,37 @@ def delete_request(pid):
     
     flash('Your post has been deleted.')
     return redirect(url_for('profile', username = session['username']))
+
+@app.route('/post/<int:pid>/save/', methods = ['POST'])
+def save_post(pid):
+    uid = session.get('uid')
+    if not uid: 
+        flash("Please log in first.")
+        return redirect(url_for('index'))
+    
+    with dbi.connect() as conn: 
+        post = get_post_details(conn, pid)
+        if post is None: 
+            abort(404)
+
+        add_saved_post(conn, uid, pid)
+
+        flash("Post saved.")
+        return redirect(url_for('post_detail', pid = pid))
+
+
+@app.route('/post/<int:pid>/unsave/', methods=['POST'])
+def unsave_post(pid):
+    uid = session.get('uid')
+    if not uid:
+        flash('Please log in first.')
+        return redirect(url_for('index'))
+
+    with dbi.connect() as conn:
+        remove_saved_post(conn, uid, pid)
+
+    flash('Post removed from saved items.')
+    return redirect(url_for('post_detail', pid=pid))
 
 if __name__ == '__main__':
     import sys, os
