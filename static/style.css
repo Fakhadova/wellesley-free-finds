@@ -1,55 +1,71 @@
-/* the --color-header and others are CSS variables, which we access later.
-   I chose these colors using https://venngage.com/tools/accessible-color-palette-generator
-   I liked the contrasting palette2 colors.
-
-   The idea is that
-
-   * the header (blue family) color is for headers and the background color of the nav bar buttons.
-   * the nav bar will have white text on the header bgcolor
-   * the nav bar will use the focus (greenish) color for
-
-*/
+/* Wellesley Free Finds colors*/
 
 HTML {
-    --color-header: #ff41f9;  /* for H1-H6 and nav buttons. */
-    --color-focus: #74ffda;   /* for focussed elements and mouseover on nav */
-    --color-alert: #f46969;   /* for flashed messages and such. */
-    --color-nav-fg: white;    /* foreground color of nav text. */
-    --font-family: Verdana;
-    font-family: var(--font-family)
+    --color-header: #002776;  /* Wellesley blue */
+    --color-focus: #9cc3ea; 
+    --color-accent: #f28c28; 
+    --color-alert: #b3261e;   /* for flashed messages */
+    --color-nav-fg: white;  
+    --color-bg: #fbf7ee;      /* cream page background */
+    --font-family: 'Nunito', sans-serif;
+    --font-heading: 'Fredoka', sans-serif;
+    font-family: var(--font-family);
+    color: #1b2340;
 }
 
-/* For flashed messages; make them stand out using reddish and italics */
-
-#messages {
-    color: var(--color-alert);
-    font-style: italic;
+body {
+    background-color: var(--color-bg);
+    margin: 0 16px 2em;
 }
 
-.pink-btn {
-    background-color: #ff41f9;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-
-h2, h3, h4, h5, h6 {
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
     color: var(--color-header);
 }
 
 h1 {
     font-size: 200%;
-    color: rgb(78, 193, 255)
+}
+
+/* for the logo bar above the nav */
+.site-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    padding: 0.6em 0;
+}
+.logo {
+    width: 56px;
+    height: 56px;
+}
+.site-name {
+    font-family: var(--font-heading);
+    font-size: 1.6em;
+    font-weight: 600;
+    color: var(--color-header);
+}
+
+/*giving the flash messages a box */
+#messages {
+    margin: 1em 0;
+    padding: 0.6em 1em;
+    background-color: white;
+    border: 2px solid var(--color-focus);
+    border-left: 6px solid var(--color-accent);
+    border-radius: 8px;
+}
+#messages p {
+    margin: 0.2em 0;
 }
 
 
-/* for a simple navbar. Talk to Scott if you want drop-downs. */
+
+/*our navigation bar! */
 nav > ul {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
 }
 
 nav ul {
@@ -60,33 +76,37 @@ nav ul {
 
 nav > ul > li {
     flex: 0 0 auto;
-    width: 15em;
+    width: 9em;
+}
+
+nav form {
+    margin: 0;
 }
 
 nav button, nav a {
     display: block;
-    box-sizing: border-box; /* easier to make button and A the same size */
+    box-sizing: border-box; 
     width: 100%;
     height: 40px;
+    line-height: 36px;
     padding: 0px;
-    padding-bottom: 5px;
     background-color: var(--color-header);
     color: var(--color-nav-fg);
-    border: 2px solid black;
+    border: 2px solid var(--color-header);
     border-radius: 5px;
     cursor: pointer;
-    /* Firefox uses font -apple-system unless I repeat the font spec here. */
-    font-family: var(--font-family);
-    font-weight: bold;
-    font-size: 1.4rem;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 1.1rem;
+    text-decoration: none;
 }
 
-/* Only the top-level buttons are centered; lower ones are left-aligned. */
+/*makes the text centered*/
 nav > ul > li > button , nav > ul > li > a {
     text-align: center;
 }
 
-/* because of the margin trick, this can only be used for the last element */
+/*gotta make sure the log-in looks right*/
 
 nav li.right {
     margin-left: auto;
@@ -94,20 +114,24 @@ nav li.right {
 
 nav button:hover, button:focus, nav a:hover, nav a:focus {
     background-color: var(--color-focus);
+    color: var(--color-header);
 }
 
 
 /* home page css*/
-body {
-    background-color: #fafafa;
-}
-
 .home-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     margin: 1.25em 0 0.75em;
 }
 .home-hero p {
     color: #555;
     margin-top: 0.25em;
+}
+.hero-goose {
+    width: 80px;
+    height: 80px;
 }
 
 .count {
@@ -120,7 +144,7 @@ body {
     font-style: italic;
 }
 
-/* the post cards */
+/*the cards for post */
 .card-grid {
     list-style: none;
     margin: 0;
@@ -140,18 +164,12 @@ body {
     overflow: hidden;
     color: inherit;
     text-decoration: none;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .card:hover, .card:focus {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-    outline: none;
-}
-.card:focus-visible {
-    outline: 3px solid var(--color-focus);
+    border-color: var(--color-header);
 }
 
-/* photo work*/
+/*the photo zone css*/
 .card-photo {
     aspect-ratio: 4 / 3;
     background-color: #f0f0f0;
@@ -184,7 +202,7 @@ body {
     text-overflow: ellipsis;
 }
 
-/* post tags */
+/*post tags */
 .tags {
     display: flex;
     flex-wrap: wrap;
@@ -198,8 +216,8 @@ body {
     background-color: #eee;
     color: #333;
 }
-.tag-donate { background-color: #ffe0fd; color: #8a0a85; }
-.tag-request { background-color: #dff2ff; color: #0b5a8a; }
+.tag-donate { background-color: #e8f1fb; color: #002776; }
+.tag-request { background-color: #fff1e3; color: #9a4a00; }
 .tag-available, .tag-open, .tag-accepted { background-color: #d9fbe8; color: #0b6b3a; }
 .tag-claimed, .tag-withdrawn{ background-color: #fff1c7; color: #7a5600; }
 
@@ -227,7 +245,7 @@ body {
     max-width: 560px;
     background-color: white;
     border-radius: 16px;
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e3e3e3;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -235,12 +253,17 @@ body {
     padding: 0 1.5em 1.75em;
 }
 
-/* create post header */
+/*create post header */
 .create-header {
     margin: 0 -1.5em;
     padding: 1.4em 1.5em 1.2em;
-    background: linear-gradient(120deg, var(--color-header), rgb(78, 193, 255));
+    background-color: var(--color-header);
     color: white;
+    text-align: center;
+}
+.create-goose {
+    width: 56px;
+    height: 56px;
 }
 .create-header h1 {
     color: white;
@@ -278,7 +301,7 @@ body {
     color: #888;
 }
 
-/* text work */
+/* text work for create post */
 .create-card input[type=text],
 .create-card textarea {
     font-family: var(--font-family);
@@ -288,13 +311,11 @@ body {
     border-radius: 10px;
     background-color: #fcfcfc;
     resize: vertical;
-    transition: border-color 0.15s, box-shadow 0.15s;
 }
 .create-card input[type=text]:focus,
 .create-card textarea:focus {
     outline: none;
     border-color: var(--color-header);
-    box-shadow: 0 0 0 4px rgba(255, 65, 249, 0.15);
     background-color: white;
 }
 .counter {
@@ -303,7 +324,7 @@ body {
     color: #999;
 }
 
-/* hiding the input types */
+/* gotta hide the input types */
 .type-option input,
 .chip-option input,
 .photo-drop input {
@@ -332,7 +353,6 @@ body {
     border: 2px solid #e5e5e5;
     border-radius: 12px;
     cursor: pointer;
-    transition: border-color 0.15s, background-color 0.15s;
 }
 .type-option small {
     color: #777;
@@ -343,11 +363,11 @@ body {
 }
 .type-option input:checked + span {
     border-color: var(--color-header);
-    background-color: #fff0fe;
+    background-color: #e8f1fb;
 }
 .type-option input[value=Request]:checked + span {
-    border-color: rgb(78, 193, 255);
-    background-color: #eef8ff;
+    border-color: var(--color-accent);
+    background-color: #fff1e3;
 }
 .type-option input:focus-visible + span,
 .chip-option input:focus-visible + span {
@@ -366,12 +386,11 @@ body {
     background-color: #fafafa;
     cursor: pointer;
     overflow: hidden;
-    transition: border-color 0.15s, background-color 0.15s;
 }
 .photo-drop:hover,
 .photo-drop:focus-within {
     border-color: var(--color-header);
-    background-color: #fff7fe;
+    background-color: #e8f1fb;
 }
 .photo-drop.has-photo {
     border-style: solid;
@@ -397,8 +416,8 @@ body {
     height: 1.8em;
     line-height: 1.75em;
     border-radius: 50%;
-    background-color: var(--color-focus);
-    color: #0b5a4a;
+    background-color: var(--color-accent);
+    color: white;
     font-size: 1.4em;
     font-weight: bold;
 }
@@ -417,7 +436,6 @@ body {
     font-size: 0.82em;
     cursor: pointer;
     user-select: none;
-    transition: all 0.15s;
 }
 .chip-option span:hover {
     border-color: var(--color-header);
@@ -435,25 +453,19 @@ body {
     padding: 0.9em;
     border: none;
     border-radius: 12px;
-    background: linear-gradient(120deg, var(--color-header), rgb(78, 193, 255));
+    background-color: var(--color-header);
     color: white;
-    font-family: var(--font-family);
+    font-family: var(--font-heading);
     font-size: 1.05em;
     font-weight: bold;
     cursor: pointer;
-    box-shadow: 0 4px 14px rgba(255, 65, 249, 0.3);
-    transition: transform 0.1s, box-shadow 0.15s;
 }
 .submit-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(255, 65, 249, 0.4);
+    background-color: #001a52;
 }
 .submit-btn:focus-visible {
     outline: 3px solid var(--color-focus);
     outline-offset: 2px;
-}
-.submit-btn:active {
-    transform: translateY(0);
 }
 
 @media (max-width: 480px) {
@@ -461,7 +473,7 @@ body {
     .create-header { margin: 0 -1em; padding: 1.1em 1em; }
 }
 
-/* ===================== Home search / filter bar ===================== */
+/* home's search and filter bar*/
 .sr-only {
     position: absolute;
     width: 1px;

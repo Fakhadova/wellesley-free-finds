@@ -5,7 +5,8 @@
 <form id="create-post" class="create-card" action="{{ url_for('post') }}"
       method="post" enctype="multipart/form-data">
 
-  <header class="create-header" style="text-align: center;">
+  <header class="create-header">
+    <img src="{{ url_for('static', filename='goose-logo.svg') }}" alt="" class="create-goose">
     <h1>Create a Post</h1>
     <p>Be a Wellesley sweetheart and</p>
     <p> -Give something away- or -Ask for something you need-</p>
@@ -40,7 +41,7 @@
       <img id="photo-preview" alt="Preview of your photo" hidden>
       <span class="photo-prompt" id="photo-prompt">
         <span class="photo-icon" aria-hidden="true">+</span>
-        Click to add a photo<br><small>JPG, PNG, GIF or WEBP, up to 5 MB</small>
+        Click to add a photo<br>(good lighting = more shoutouts)<br><small>JPG, PNG, GIF or WEBP, up to 5 MB</small>
       </span>
     </label>
   </div>
@@ -76,7 +77,7 @@
     </div>
   </fieldset>
 
-  <button type="submit" class="submit-btn" id="submit-btn">Post Donation</button>
+  <button type="submit" class="submit-btn" id="submit-btn">Honk! Post my donation</button>
 </form>
 </div>
 {% endblock %}
@@ -88,7 +89,7 @@ function updateForType() {
     var isDonate= $('input[name=post_type]:checked').val()==='Donate';
     $('#photo-input').prop('required', isDonate);
     $('#photo-note').text(isDonate ? '(required)' : '(optional)');
-    $('#submit-btn').text(isDonate ? 'Post Donation' : 'Post Request');
+    $('#submit-btn').text(isDonate ? 'Honk! Post my donation' : 'Honk! Post my request');
 }
 $('input[name=post_type]').on('change', updateForType);
 updateForType();

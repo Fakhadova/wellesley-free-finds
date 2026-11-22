@@ -2,16 +2,21 @@
 
 {% block main_content %}
 <header class="home-hero">
-  <h1>Wellesley Free Finds</h1>
-  <p>Browse free items from your campus community, or see what others are looking for.</p>
+  <div>
+    <h1>Honk if you like free stuff.</h1>
+    <p>One student's clutter is another student's dorm haul. 
+       Grab something, give something, or ask the sibs for help.</p> {#I came up with this line, but if it feels cheesy, 
+        we can just use the second part!#}
+  </div>
+  <img src="{{ url_for('static', filename='goose-logo.svg') }}" alt="" class="hero-goose">
 </header>
 
-{# search + filter + sort bar. It's a GET form, so the choices stay in the URL #}
+{# search + filter + sort bar thing, using get since we need it to be in url #}
 <form class="filter-bar" id="filter-bar" method="get" action="{{ url_for('home') }}">
   <div class="filter-row">
     <label for="search-keyword" class="sr-only">Search posts</label>
     <input id="search-keyword" type="search" name="keyword"
-           value="{{ filters.keyword }}" placeholder="Search for items...">
+           value="{{ filters.keyword }}" placeholder="Search for a textbook, a fridge, an expensive winter coat...">
     <button type="submit" class="pink-btn">Search</button>
   </div>
 
@@ -79,7 +84,7 @@
             <img src="{{ url_for('uploaded_photo', filename=p.photo_filename) }}"
                  alt="Photo of {{ p.title }}" loading="lazy">
           {% else %}
-            <span class="no-photo">No photo :C </span>
+            <span class="no-photo">No photo, just vibes</span>
           {% endif %}
         </div>
         <div class="card-body">
@@ -97,9 +102,9 @@
   </ul>
   {% else %}
     {% if filtering %}
-      <p class="empty">No posts match your search or filters. <a href="{{ url_for('home') }}">Clear all</a></p>
+      <p class="empty">No posts match that. Even the geese looked everywhere. <a href="{{ url_for('home') }}">Clear all</a></p>
     {% else %}
-      <p class="empty">Nothing has been posted yet.</p>
+      <p class="empty">Nothing here yet. The geese took everything. Be the first to post!</p>
     {% endif %}
     
   {% endif %}
@@ -109,7 +114,6 @@
 {% block end_scripts %}
 <script>
 // apply filters right away when a dropdown or chip changes
-// (the Apply button stays for people without JavaScript)
 $('#filter-bar select, #filter-bar input[type=checkbox]').on('change', function () {
     $('#filter-bar').submit();
 });
