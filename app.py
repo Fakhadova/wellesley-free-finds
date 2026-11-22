@@ -416,7 +416,7 @@ def edit_post(pid):
                 'edit_post.html', 
                 post = post,
                 categories = CATEGORIES,
-                form = {}
+                form = {},
                 chosen = post['category'].split(','))
         
         #Get the submitted form values
