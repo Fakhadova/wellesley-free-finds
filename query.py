@@ -257,7 +257,7 @@ def update_post(conn, pid, title, description, categories):
 
 def mark_request_fulfilled(conn, pid):
     """Marks a Request post as Fulfilled and closes its outstanding offers."""
-        with dbi.cursor(conn) as curs: 
+    with dbi.cursor(conn) as curs: 
         curs.execute('''
         update posts 
         set status = 'Fulfilled'
