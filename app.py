@@ -394,33 +394,68 @@ def edit_post(pid):
         return redirect(url_for('index'))
     with dbi.connect() as conn:
         post = get_post_details(conn, pid)
+        
         if post is None:
             flash("That post doesn't exist.")
             return redirect(url_for('index'))
+
         if post['uid'] != uid:
             flash("You are not authorized to edit this post.")
             return redirect(url_for('index'))
+
+        if post['post_type'] != 'Request':
+            flash("Donate post editing is not available yet.")
+            return redirect(url_for('post_detail', pid=pid))
+        
+        if post['status'] == 'Fulfilled':
+            flash('This post has already been fulfilled.')
+            return redirect(url_for('post_detail', pid=pid))
+
         if request.method == 'GET':
-            return render_template('edit_post.html', page_title = 'Edit Post', post = post, categories = CATEGORIES)
-        #option stuff for editing
+            return render_termplate(
+                'edit_post.html', 
+                post = post,
+                categories = CATEGORIES,
+                form = {}
+                chosen = post['category'].split(','))
+        
+        #Get the submitted form values
         form = request.form
         title = form.get('title', '').strip()
         description = form.get('description', '').strip()
         categories = [c for c in form.getlist('category') if c in CATEGORIES]
         errors = []
+        
         if not title or len(title) > 100:
             errors.append('Item name is required (max 100 characters).')
+        
         if not description or len(description) > 500:
             errors.append('Description is required (max 500 characters).')
+        
         if not categories:
             errors.append('Choose at least one category.')
+        
+        #A new photo is optional
+        ext = None
+        try: 
+            ext = photo_extention(photo)
+        except ValueError as err:
+            errors.append(str(err))
+
         if errors:
-            for e in errors:
-                flash(e)
-                return render_template('edit_post.html', page_title = 'Edit Post', post = post, categories = CATEGORIES)
-        #update post in database
+            for error in errors:
+                flash(error)
+            return render_template('edit_post.html', page_title = 'Edit Post', 
+            post = post, categories = CATEGORIES, form = form, chosen = categories)
+
+        #Update the post's text info 
+
         update_post(conn, pid, title, description, categories)
-        flash('Your post has been updated.')
+
+        #replace the photo only if new one is uploaded
+        if ext: 
+            save_photo(conn, pid, photo, ext)
+    flash('Your post has been updated.')
     return redirect(url_for('post_detail', pid = pid))
 
 

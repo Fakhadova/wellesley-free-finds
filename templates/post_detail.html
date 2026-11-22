@@ -30,6 +30,14 @@
   {% elif post.uid == uid %}
     <p><em>This is your post.</em></p>
 
+    {% if post.post_type == 'Request' and post.status == 'Open' %}
+        <p>
+            <a href="{{ url_for('edit_post', pid=post.pid) }}">
+                Edit Post
+            </a>
+        </p>
+    {% endif %}
+
   {% elif interest and interest.status in ('Pending', 'Accepted') %}
     <p>
       {% if interest.status == 'Accepted' %}
