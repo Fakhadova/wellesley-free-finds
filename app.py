@@ -141,7 +141,7 @@ def user(username=None):
         #                        uid=uid,
         #                        visits=session['visits'])
 
-        return render_template('home.html')
+        return redirect(url_for('home'))
     else:
         flash('you are not logged in. Please login or join')
         return redirect( url_for('index') )
