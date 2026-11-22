@@ -122,9 +122,10 @@ def home():
     #making this true if the user used search or filter so the "clear" button shows up
     filtering= bool(filters['keyword'] or filters['post_type']
                      or filters['categories'] or filters['statuses'])
-    return render_template('home.html', page_title='Home Page', posts=posts,
-                           filters=filters, filtering=filtering,
-                           categories=CATEGORIES, active_statuses=ACTIVE_STATUSES)
+    return render_template('home.html', page_title='Home Page',
+                       posts=posts, filters=filters,
+                       filtering=filtering, categories=CATEGORIES,
+                       active_statuses=ACTIVE_STATUSES)
 
 @app.route('/user/<username>')
 def user(username=None):
@@ -140,7 +141,7 @@ def user(username=None):
         #                        uid=uid,
         #                        visits=session['visits'])
 
-        return render_template('home.html', page_title='Home Page')
+        return render_template('home.html')
     else:
         flash('you are not logged in. Please login or join')
         return redirect( url_for('index') )
@@ -173,8 +174,12 @@ def make_request(pid):
         elif post['status'] not in ('Available', 'Open'):
             flash('This post is not available')
         else:
-            add_request(conn, sid, pid, 'Pending')
-            flash('request sent')
+            existing = get_interest_bypid(conn, pid, sid)
+            if existing and existing['status'] in ('Pending', 'Accepted'):
+                flash('You already have an active request or offer.')
+            else:
+                add_request(conn, sid, pid, 'Pending')
+                flash('Request or offer sent.')
         return redirect(url_for('post_detail', pid=pid))
 
 @app.route('/post/<int:pid>/cancel/', methods=['POST'])
@@ -182,7 +187,7 @@ def cancel_request(pid):
     uid = session.get('uid')
     if not uid:
         flash('please login first')
-        return redirect(url_for('login'))
+        return redirect(url_for('index'))
     with dbi.connect() as conn:
         post = get_post_details(conn, pid)
         if post is None:
@@ -220,6 +225,7 @@ def accept_interest(iid):
         interest = get_interest_byiid(conn, iid)
         if not interest:
             flash("This request doesn't exist")
+            return redirect(url_for('profile', username=username))
         if interest['status']!='Pending':
             flash('you cannot accept this interest')
             return redirect(url_for('profile', username=username))
@@ -243,18 +249,23 @@ def decline_interest(iid):
     uid = session.get('uid')
     if not username:
         flash('please log in first')
-        redirect(url_for('index'))
+        return redirect(url_for('index'))
     with dbi.connect() as conn:
         interest = get_interest_byiid(conn, iid)
         if not interest:
             flash("This request doesn't exist")
+            return redirect(url_for('profile', username=username))
         post = get_post_details(conn, interest['pid'])
         #someone else is trying to accept a request
-        if post['uid']!=uid:
-            flash("You cannot accept interest on someone else's post")
-            return redirect(url_for('post', pid=interest['pid']))
-        else:
-            decline_request(conn, iid)
+        if post is None or post['uid']!=uid:
+            flash("You cannot decline interest on someone else's post")
+            return redirect(url_for('profile', username = username))
+        if interest['status'] != 'Pending':
+            flash('This interest cannot be declined.')
+            return redirect(url_for('profile', username=username))
+
+        decline_request(conn, iid)
+        flash('Interest declined.')
         return redirect(url_for('profile', username=username))
 
 @app.route('/profile/<username>')
@@ -268,11 +279,21 @@ def profile(username):
     # Fetch the user's donate and request posts from the database
     with dbi.connect() as conn:
         with dbi.dict_cursor(conn) as curs:
-            curs.execute('''SELECT * FROM posts WHERE uid = %s''', [uid])
-            posts = curs.fetchall()
-            curs.execute('''SELECT * from posts where uid = %s and is_deleted = 0 and status not in ('Completed', 'Fulfilled')
-            order by posted_at desc''', [uid])
+            curs.execute('''SELECT p.pid, p.uid, p.post_type, p.title,
+            p.description, p.category, p.status, p.posted_at,
+            u.username, f.filename AS photo_filename
+            FROM posts p
+            JOIN users u ON p.uid = u.uid
+            LEFT JOIN picfile f ON p.pid = f.pid
+            WHERE p.uid = %s
+            AND p.is_deleted = 0
+            AND p.status NOT IN ('Completed', 'Fulfilled')
+            ORDER BY p.posted_at DESC''', [uid])
             active_posts = curs.fetchall()
+
+
+
+
             curs.execute('''SELECT * from posts where uid = %s and is_deleted = 0 and status in ('Completed', 'Fulfilled')
             order by posted_at desc''', [uid])
             archived_posts = curs.fetchall()
@@ -408,8 +429,8 @@ def edit_post(pid):
             flash("Donate post editing is not available yet.")
             return redirect(url_for('post_detail', pid=pid))
         
-        if post['status'] == 'Fulfilled':
-            flash('This post has already been fulfilled.')
+        if post['status'] != 'Open':
+            flash('This post cannot be edited.')
             return redirect(url_for('post_detail', pid=pid))
 
         if request.method == 'GET':
