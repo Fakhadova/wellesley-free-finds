@@ -490,7 +490,7 @@ def fulfill_request_post(pid):
     flash("Your request post has been marked fulfilled.")
     return redirect(url_for('profile', username=session['username']))
 
-@app.route('/post<int:pid>/delete/', methods = ['POST'])
+@app.route('/post/<int:pid>/delete/', methods = ['POST'])
 def delete_request(pid):
     uid= session.get('uid')
     if not uid: 
@@ -500,7 +500,7 @@ def delete_request(pid):
     with dbi.connect() as conn: 
         post = get_post_details(conn, pid)
 
-        if post is none: 
+        if post is None: 
             abort(404)
         
         if post['uid'] != uid or post['post_type'] != 'Request':

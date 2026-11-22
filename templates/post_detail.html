@@ -60,17 +60,20 @@
   {% endif %}
   {# ============ end of Request Item / I Have This buttons ============ #}
 
-  {%if uid %}
-    {%if is_saved %}
-      <form method = "POST"
-        action = "{{url_for('unsave_post', pid = post.pid)}}">
-        <button type = "submit"> Unsave Post</button>
-      </form>
-    {%else%}
-    <form method = "POST"
-      action = "{{url_for('save_post', pid=post.pid)}}">
-      <button type = "submit"> Save Post </button>
+  
+{% if uid %}
+{% if is_saved %}
+    <form method="POST"
+          action="{{ url_for('unsave_post', pid=post.pid) }}">
+        <button type="submit">Unsave Post</button>
     </form>
-    {%endif%}
+{% else %}
+    <form method="POST"
+          action="{{ url_for('save_post', pid=post.pid) }}">
+        <button type="submit">Save Post</button>
+    </form>
+{% endif %}
+{% endif %}
+
 </article>
 {% endblock %}

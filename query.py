@@ -256,7 +256,7 @@ def update_post(conn, pid, title, description, categories):
 
 def mark_request_fulfilled(conn, pid):
     '''marks a Request post as fufilled and closes its offers'''
-    with dbi.curson(conn) as curs: 
+    with dbi.cursrn(conn) as curs: 
         curs.execute('''
         update posts 
         set status = 'Fulfilled'
@@ -291,7 +291,7 @@ def delete_request_post(conn, pid):
 def is_saved_post(conn, uid, pid):
     '''checks whether a user has saved a post'''
     with dbi.dict_cursor(conn) as curs:
-        curs.execute('''select side from saved_posts
+        curs.execute('''select sid from saved_posts
         where uid = %s and pid=%s''', [uid, pid])
         return curs.fetchone() is not None
 
@@ -307,7 +307,7 @@ def add_saved_post(conn, uid, pid):
 
 def remove_saved_post(conn, uid, pid):
     '''removes a post from the user's saved posts'''
-    with dbi.curson(conn) as curs: 
+    with dbi.cursor(conn) as curs: 
         curs.execute(''' 
         delete from saved_posts
         where uid=%s and pid=%s''', 
