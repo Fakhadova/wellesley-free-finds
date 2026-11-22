@@ -244,13 +244,12 @@ def get_post_details(conn, pid):
     ''', [pid])
     return curs.fetchone()
 
-def update_post(conn, pid, title, description, categories, photo_filename=None):
-    '''updates a post with a new title, description, categories, and optionally a new photo filename'''
-    curs = dbi.cursor(conn)
-    curs.execute('''
-        update posts
-        set title=%s, description=%s, category=%s, photo_filename=%s
-        where pid=%s and is_deleted=0
-        ''', [title, description, ','.join(categories), photo_filename, pid])
+def update_post(conn, pid, title, description, categories):
+    '''updates a post with a new title, description and categories'''
+    with dbi.curson(conn) as curs:
+        curs.execute('''
+            update posts
+            set title=%s, description=%s, category=%s
+            where pid = %s and is_deleted = 0''',
+            [title, description, ','.join(categories), pid])
     conn.commit()
-    return
