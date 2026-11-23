@@ -107,20 +107,20 @@
                 - {{interest.interest_status}}
 
                 {% if interest.interest_status == 'Pending' %}
-                    <form method = "post"
+                <form method="post" style="display:inline"
                     action = "{{url_for('accept_interest', iid = interest.iid)}}">
                     <button type="submit">Accept</button>
                 </form>
 
-                <form method ="post"
+                <form method="post" style="display:inline"
                 action = "{{url_for('decline_interest', iid = interest.iid)}}">
                 <button type="submit">Decline</button>
                 </form>
-            {% endif %}
-        </li>
-    {% else %}
-            <li>No one has shown interest in your posts yet.</li>
-    {% endfor %}
+                {% endif %}
+            </li>
+                {% else %}
+                    <li>No one has shown interest in your posts yet.</li>
+        {% endfor %}
     </ul>
 </div>
 
