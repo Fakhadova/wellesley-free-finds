@@ -576,7 +576,86 @@ nav button:hover, button:focus, nav a:hover, nav a:focus {
     margin: 0;
 }
 
-.profile-post-card .post-actions a,
-.profile-post-card .post-actions button {
-    font-size: 0.7em;
+
+/* ===================== small action buttons =====================
+   used on profile (Edit, Mark Fulfilled, Delete, Accept, ...) and
+   the edit form. add class="btn", plus btn-primary or btn-danger */
+.btn {
+    display: inline-block;
+    padding: 0.35em 0.8em;
+    border: 2px solid var(--color-header);
+    border-radius: 6px;
+    background-color: white;
+    color: var(--color-header);
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+.btn:hover, .btn:focus {
+    background-color: #e8f1fb;
+}
+.btn-primary {
+    background-color: var(--color-header);
+    color: white;
+}
+.btn-primary:hover, .btn-primary:focus {
+    background-color: #001a52;
+}
+.btn-danger {
+    border-color: var(--color-alert);
+    color: var(--color-alert);
+}
+.btn-danger:hover, .btn-danger:focus {
+    background-color: #fdecea;
+}
+
+/* "Requested Items and Offers Made": each grid cell holds a card AND a
+   cancel/withdraw button, so stack them in a column inside the cell
+   (otherwise the button hangs out of the cell into the next heading) */
+.my_interest_list .card-grid > li {
+    display: flex;
+    flex-direction: column;
+}
+.my_interest_list .card {
+    height: auto;
+    flex: 1;
+}
+.my_interest_list {
+    margin-bottom: 1.5em;
+}
+.card-actions {
+    margin: 6px 0 0;
+}
+
+/* accept/decline sit next to each other on the same line */
+.interest-list li {
+    margin-bottom: 0.5em;
+}
+.interest-list form {
+    display: inline;
+    margin-left: 0.3em;
+}
+
+/* edit form */
+.current-photo {
+    max-width: 100%;
+    max-height: 220px;
+    border-radius: 10px;
+    border: 1px solid #e3e3e3;
+    align-self: flex-start;
+}
+.form-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.8em;
+}
+.form-actions .submit-btn {
+    flex: 1;
+    margin-top: 0;
+}
+.form-actions .btn {
+    font-size: 1rem;
+    padding: 0.75em 1.2em;
 }

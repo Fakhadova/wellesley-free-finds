@@ -60,18 +60,18 @@
             {% if post.post_type == 'Request' and post.status == 'Open' %}
             <div class="post-actions">
 
-                <a href="{{ url_for('edit_post', pid=post.pid) }}">
+                <a class="btn" href="{{ url_for('edit_post', pid=post.pid) }}">
                     Edit
                 </a>
 
                 <form method="POST"
                       action="{{ url_for('fulfill_request_post', pid=post.pid) }}">
-                    <button type="submit">Mark Fulfilled</button>
+                    <button type="submit" class="btn btn-primary">Mark Fulfilled</button>
                 </form>
 
                 <form method="POST"
                       action="{{ url_for('delete_request', pid=post.pid) }}">
-                    <button type="submit">Delete</button>
+                    <button type="submit" class="btn btn-danger">Delete</button>
                 </form>
 
             </div>
@@ -133,7 +133,7 @@
       {% if i.interest_status in ('Pending', 'Accepted') %}
             <form class="card-actions" method="POST"
                     action="{{ url_for('cancel_request', pid=i.pid) }}">
-                <button type="submit">
+                <button type="submit" class="btn btn-danger">
                     {{ 'Cancel Request' if i.post_type == 'Donate' else 'Withdraw Offer' }}
                 </button>
             </form>
@@ -164,12 +164,12 @@
                 {% if interest.interest_status == 'Pending' %}
                     <form method = "post"
                     action = "{{url_for('accept_interest', iid = interest.iid)}}">
-                    <button type="submit">Accept</button>
+                    <button type="submit" class="btn btn-primary">Accept</button>
                 </form>
 
                 <form method ="post"
                 action = "{{url_for('decline_interest', iid = interest.iid)}}">
-                <button type="submit">Decline</button>
+                <button type="submit" class="btn btn-danger">Decline</button>
                 </form>
             {% endif %}
         </li>

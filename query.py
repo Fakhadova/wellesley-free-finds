@@ -179,10 +179,10 @@ def search_posts(conn, keyword, post_type, sort):
                          left join picfile f using (pid)
             where p.is_deleted = 0
               and p.status not in ('Completed', 'Fulfilled')
-              and (p.title like %s or p.description like %s)
+              and p.title like %s
               and (%s = '' or p.post_type = %s)
             order by p.posted_at asc
-        ''', [search, search, post_type, post_type])
+        ''', [search, post_type, post_type])
     else:
         curs.execute('''
             select p.pid, p.uid, u.username, p.post_type, p.title,
@@ -192,10 +192,10 @@ def search_posts(conn, keyword, post_type, sort):
                          left join picfile f using (pid)
             where p.is_deleted = 0
               and p.status not in ('Completed', 'Fulfilled')
-              and (p.title like %s or p.description like %s)
+              and p.title like %s
               and (%s = '' or p.post_type = %s)
             order by p.posted_at desc
-        ''', [search, search, post_type, post_type])
+        ''', [search, post_type, post_type])
     return curs.fetchall()
 
 

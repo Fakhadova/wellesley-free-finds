@@ -1,68 +1,69 @@
-<!-- Edit an existing Request post, including its details.-->
-{%extends "base.html" %}
+<!-- Edit an existing Request post, including its details. -->
+{% extends "base.html" %}
 
 {% block main_content %}
-<article class="post-detail">
-    <p>
-        <a href = "{{url_for('post_detail', pid = post.pid)}}">
-            Back to Post </a>
-    </p>
+<div class="create-wrap">
+<form class="create-card" method="POST" action="{{ url_for('edit_post', pid=post.pid) }}"
+      enctype="multipart/form-data">
 
+  <header class="create-header">
     <h1>Edit Post</h1>
-    <form method="POST" action="{{ url_for('edit_post', pid=post.pid) }}" 
-    enctype="multipart/form-data">
+    <p>Use here to fix whatever you like!</p>
+  </header>
 
-        <label for="title">Item Name:</label>
-        <input type="text" id="title" name="title" value="{{form.get('title', post.title)}}" 
-        maxlength = "100" required>
+  <p><a href="{{ url_for('post_detail', pid=post.pid) }}">&larr; Back to post</a></p>
 
-        <label for="description">Description:</label>
-        <textarea id="description" name="description" maxlength = "500" 
-        required> {{ form.get('description', post.description) }}</textarea>
 
-        <fieldset>
-            <legend> Categories:</legend>
-            {% for value, label in categories.items() %}
-            <label>
-                <input type = "checkbox"
-                name = "category"
-                value = "{{value}}"
-                {% if value in chosen %} checked {%endif%}>
-            {{label}} </label>
-        {%endfor%}
-    </fieldset>
+  <div class="field">
+    <label class="field-label" for="title">Item name</label>
+    <input type="text" id="title" name="title" maxlength="100" required
+           value="{{ form.get('title', post.title) }}">
+  </div>
 
-    <label>Current Photo </label>
+
+  <div class="field">
+    <label class="field-label" for="description">Description</label>
+    <textarea id="description" name="description" maxlength="500" rows="4"
+              required>{{ form.get('description', post.description) }}</textarea>
+  </div>
+
+
+  <fieldset class="field">
+    <legend class="field-label">Categories <span class="hint">(choose one or more)</span></legend>
+    <div class="chip-picker">
+      {% for value, label in categories.items() %}
+      <label class="chip-option">
+        <input type="checkbox" name="category" value="{{ value }}"
+               {% if value in chosen %}checked{% endif %}>
+        <span>{{ label }}</span>
+      </label>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+
+  <div class="field">
+    <span class="field-label">Current photo</span>
     {% if post.photo_filename %}
-    <p>
-        <img src = "{{url_for('uploaded_photo', filename = post.photo_filename)}}"
-        alt = "Current photo"
-        style = "max-width: 100%; max-height: 200px;">
-    </p>
-    {%else%}
-    <p> No photo uploaded.</p>
-    {%endif%}
+      <img class="current-photo"
+           src="{{ url_for('uploaded_photo', filename=post.photo_filename) }}"
+           alt="Current photo of {{ post.title }}">
+    {% else %}
+      <p class="hint">No photo uploaded.</p>
+    {% endif %}
+  </div>
 
-    <label for="photo">Replace Photo (optional):</label>
-        <input type="file"
-               id="photo"
-               name="photo"
-               accept="image/jpeg,image/png,image/gif,image/webp">
+  <div class="field">
+    <label class="field-label" for="photo">Replace photo <span class="hint">(optional)</span></label>
+    <input type="file" id="photo" name="photo"
+           accept="image/jpeg,image/png,image/gif,image/webp">
+    <span class="hint">Leave this blank to keep your current photo.</span>
+  </div>
 
-        <p>Leave this blank to keep your current photo.</p>
-
-        <button type="submit">Save Changes</button>
-
-        <a href="{{ url_for('post_detail', pid=post.pid) }}">
-            Cancel
-        </a>
-
-    </form>
-</article>
+  <div class="form-actions">
+    <button type="submit" class="submit-btn">Save Changes</button>
+    <a href="{{ url_for('post_detail', pid=post.pid) }}" class="btn">Cancel</a>
+  </div>
+</form>
+</div>
 {% endblock %}
-
-
-
-
-
-

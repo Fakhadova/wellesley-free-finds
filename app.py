@@ -437,7 +437,8 @@ def edit_post(pid):
 
         if request.method == 'GET':
             return render_template(
-                'edit_post.html', 
+                'edit_post.html',
+                page_title = 'Edit Post',
                 post = post,
                 categories = CATEGORIES,
                 form = {},
