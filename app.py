@@ -60,7 +60,7 @@ def register():
                                 [username, hashed])
                 conn.commit()
             except pymysql.IntegrityError:
-                #has to make sure the raw error doesn't show 
+                #has to make sure the raw error doesn't show
                 flash('That username is taken. Please choose another one.')
                 return redirect(url_for('index'))
             uid = curs.lastrowid
@@ -248,6 +248,7 @@ def accept_interest(iid):
             if post['post_type']== 'Donate':
                 change_post_status(conn, interest['pid'], 'Claimed')
             flash('Accepted the interest')
+            conn.commit()
         return redirect(url_for('profile', username=username))
 
 @app.route('/profile/interest_list/<int:iid>/decline', methods=['POST'])#what is the endpoint of this?
@@ -422,7 +423,7 @@ def edit_post(pid):
         return redirect(url_for('index'))
     with dbi.connect() as conn:
         post = get_post_details(conn, pid)
-        
+
         if post is None:
             flash("That post doesn't exist.")
             return redirect(url_for('index'))
@@ -434,7 +435,7 @@ def edit_post(pid):
         if post['post_type'] != 'Request':
             flash("Donate post editing is not available yet.")
             return redirect(url_for('post_detail', pid=pid))
-        
+
         if post['status'] != 'Open':
             flash('This post cannot be edited.')
             return redirect(url_for('post_detail', pid=pid))
@@ -447,7 +448,7 @@ def edit_post(pid):
                 categories = CATEGORIES,
                 form = {},
                 chosen = post['category'].split(','))
-        
+
         #Get the submitted form values
         form = request.form
         title = form.get('title', '').strip()
@@ -455,19 +456,19 @@ def edit_post(pid):
         categories = [c for c in form.getlist('category') if c in CATEGORIES]
         photo = request.files.get('photo')
         errors = []
-        
+
         if not title or len(title) > 100:
             errors.append('Item name is required (max 100 characters).')
-        
+
         if not description or len(description) > 500:
             errors.append('Description is required (max 500 characters).')
-        
+
         if not categories:
             errors.append('Choose at least one category.')
-        
+
         #A new photo is optional
         ext = None
-        try: 
+        try:
             ext = photo_extension(photo)
         except ValueError as err:
             errors.append(str(err))
@@ -475,15 +476,15 @@ def edit_post(pid):
         if errors:
             for error in errors:
                 flash(error)
-            return render_template('edit_post.html', page_title = 'Edit Post', 
+            return render_template('edit_post.html', page_title = 'Edit Post',
             post = post, categories = CATEGORIES, form = form, chosen = categories)
 
-        #Update the post's text info 
+        #Update the post's text info
 
         update_post(conn, pid, title, description, categories)
 
         #replace the photo only if new one is uploaded
-        if ext: 
+        if ext:
             save_photo(conn, pid, photo, ext)
     flash('Your post has been updated.')
     return redirect(url_for('post_detail', pid = pid))
@@ -501,21 +502,21 @@ def uploaded_photo(filename):
 def fulfill_request_post(pid):
     """Marks an Open Request post as Fulfilled and closes outstanding offers."""
     uid = session.get('uid')
-    if not uid: 
+    if not uid:
         flash('Please log in first.')
         return redirect(url_for('index'))
-    with dbi.connect() as conn: 
+    with dbi.connect() as conn:
         post = get_post_details(conn, pid)
-        if post is None: 
+        if post is None:
             abort(404)
         if post['uid'] != uid or post['post_type'] != 'Request':
             abort(403)
-        
+
         if post['status'] != 'Open':
             flash('This post cannot be marked fulfilled.')
             return redirect(url_for('post_detail', pid = pid))
 
-        mark_request_fulfilled(conn, pid) 
+        mark_request_fulfilled(conn, pid)
     flash("Your request post has been marked fulfilled.")
     return redirect(url_for('profile', username=session['username']))
 
@@ -523,21 +524,21 @@ def fulfill_request_post(pid):
 def delete_request(pid):
     """Deletes a Request post and closes its outstanding offers."""
     uid= session.get('uid')
-    if not uid: 
+    if not uid:
         flash('Please log in first.')
         return redirect (url_for('index'))
-    
-    with dbi.connect() as conn: 
+
+    with dbi.connect() as conn:
         post = get_post_details(conn, pid)
 
-        if post is None: 
+        if post is None:
             abort(404)
-        
+
         if post['uid'] != uid or post['post_type'] != 'Request':
             abort(403)
-        
+
         delete_request_post(conn, pid)
-    
+
     flash('Your post has been deleted.')
     return redirect(url_for('profile', username = session['username']))
 
@@ -545,13 +546,13 @@ def delete_request(pid):
 def save_post(pid):
     """Saves a post to the current user's saved posts."""
     uid = session.get('uid')
-    if not uid: 
+    if not uid:
         flash("Please log in first.")
         return redirect(url_for('index'))
-    
-    with dbi.connect() as conn: 
+
+    with dbi.connect() as conn:
         post = get_post_details(conn, pid)
-        if post is None: 
+        if post is None:
             abort(404)
 
         add_saved_post(conn, uid, pid)

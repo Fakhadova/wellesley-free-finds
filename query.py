@@ -22,7 +22,8 @@ def accept_request(conn, iid):
         set status='Accepted'
         where iid=%s
         ''',[iid])
-    conn.commit()
+        # I will commit together with change_status to avoid failure
+
 
 def decline_request(conn, iid):
     '''change the status of interest at iid to Declined'''
@@ -35,7 +36,7 @@ def decline_request(conn, iid):
     conn.commit()
 
 def get_interest_bypid(conn, pid, uid):
-    '''getting post request based on iid'''
+    '''getting post request based on pid'''
     with dbi.dict_cursor(conn) as curs:
         curs.execute('''
             select * from interests
@@ -64,14 +65,14 @@ def withdraw_interest(conn, iid):
     return
 
 def change_post_status(conn, pid, status):
-    '''change the status of iid to given status'''
+    '''change the status of pid to given status'''
     with dbi.dict_cursor(conn) as curs:
         curs.execute('''
             update posts
             set status=%s
             where pid=%s
         ''', [status, pid])
-        conn.commit()
+        # I will commit together with accept_request to avoid failure
     return
 def get_my_interests(conn, uid):
     '''all requests/offers the user has made, with the poster's username'''
@@ -206,7 +207,7 @@ def filter_by_categories(posts, categories):
         return posts
     kept= []
     for post in posts:
-        post_categories= post['category'].split(',')   
+        post_categories= post['category'].split(',')
         for category in categories:
             if category in post_categories:
                 kept.append(post)
@@ -257,29 +258,29 @@ def update_post(conn, pid, title, description, categories):
 
 def mark_request_fulfilled(conn, pid):
     """Marks a Request post as Fulfilled and closes its outstanding offers."""
-    with dbi.cursor(conn) as curs: 
+    with dbi.cursor(conn) as curs:
         curs.execute('''
-        update posts 
+        update posts
         set status = 'Fulfilled'
         where pid = %s and post_type = 'Request'
-        and is_deleted = 0''', 
+        and is_deleted = 0''',
         [pid])
 
         curs.execute('''
         update interests
         set status = 'Closed'
-        where pid = %s and status in 
+        where pid = %s and status in
         ('Pending', 'Accepted')''', [pid])
     conn.commit()
 
-def delete_request_post(conn, pid): 
+def delete_request_post(conn, pid):
     '''Soft deletes a Request post and closess its offers'''
     with dbi.cursor(conn) as curs:
         curs.execute('''
-        update posts 
+        update posts
         set is_deleted = 1
         where pid=%s and post_type = 'Request'
-        and is_deleted = 0''', 
+        and is_deleted = 0''',
         [pid])
 
         curs.execute('''
@@ -308,9 +309,9 @@ def add_saved_post(conn, uid, pid):
 
 def remove_saved_post(conn, uid, pid):
     '''removes a post from the user's saved posts'''
-    with dbi.cursor(conn) as curs: 
-        curs.execute(''' 
+    with dbi.cursor(conn) as curs:
+        curs.execute('''
         delete from saved_posts
-        where uid=%s and pid=%s''', 
+        where uid=%s and pid=%s''',
         [uid, pid])
     conn.commit()
