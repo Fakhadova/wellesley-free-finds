@@ -39,7 +39,7 @@ def register():
     passwd1 = request.form.get('password1', '')
     passwd2 = request.form.get('password2', '')
     if not username or len(username) > 20:
-        flash('Username is required (max 20 characters).)')
+        flash('Username is required (max 20 characters).')
         return redirect(url_for('index'))
     if not passwd1:
         flash('Password is required.')
@@ -59,8 +59,9 @@ def register():
                                 VALUES(null,%s,%s)''',
                                 [username, hashed])
                 conn.commit()
-            except pymysql.IntegrityError as err:
-                flash(f'Username taken: {err}')
+            except pymysql.IntegrityError:
+                #has to make sure the raw error doesn't show 
+                flash('That username is taken. Please choose another one.')
                 return redirect(url_for('index'))
             uid = curs.lastrowid
             session.clear()
@@ -242,7 +243,10 @@ def accept_interest(iid):
             return redirect(url_for('profile', username=username))
         else:
             accept_request(conn, iid)
-            change_post_status(conn, interest['pid'], 'Claimed')
+            #only donate posts become claimed;request posts stay open
+            #until the requester marks them fulfilled
+            if post['post_type']== 'Donate':
+                change_post_status(conn, interest['pid'], 'Claimed')
             flash('Accepted the interest')
         return redirect(url_for('profile', username=username))
 
