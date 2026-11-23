@@ -10,26 +10,81 @@
  My active Posts: Available, Claimed, Open
  Saved Posts: Posts bookmarked by user
  Offers Made: Interests in Request posts
- Archieved Posts: Completed, Fulfilled
+ Archived Posts: Completed, Fulfilled
  Requested Items: Interests in Donate Posts
 -->
 
 <!--My active Posts: Available, Claimed, Open-->
 <div class="profile-section">
     <h2>My Active Posts</h2>
-    <ul>
+
+    <ul class="card-grid">
         {% for post in active_posts %}
-            <li>
-                <a href="{{ url_for('post_detail', pid=post.pid) }}">
-                    {{post.title}}
-                    </a>
-                    - {{post.status}}
-            </li>
+        <li class="card profile-post-card">
+
+            <a class="profile-post-link"
+               href="{{ url_for('post_detail', pid=post.pid) }}">
+
+                <div class="card-photo">
+                    {% if post.photo_filename %}
+                        <img src="{{ url_for('uploaded_photo', filename=post.photo_filename) }}"
+                             alt="Photo of {{ post.title }}">
+                    {% else %}
+                        <span class="no-photo">No photo</span>
+                    {% endif %}
+                </div>
+
+                <div class="card-body">
+                    <div class="tags">
+                        <span class="tag tag-{{ post.post_type | lower }}">
+                            {{ post.post_type }}
+                        </span>
+
+                        <span class="tag tag-{{ post.status | lower }}">
+                            {{ post.status }}
+                        </span>
+                    </div>
+
+                    <h3>{{ post.title }}</h3>
+
+                    <p class="card-cats">
+                        {{ post.category | category_labels | join(' · ') }}
+                    </p>
+
+                    <p class="card-meta">
+                        {{ post.username }} · {{ post.posted_at.strftime('%b %d') }}
+                    </p>
+                </div>
+            </a>
+
+            {% if post.post_type == 'Request' and post.status == 'Open' %}
+            <div class="post-actions">
+
+                <a class="btn" href="{{ url_for('edit_post', pid=post.pid) }}">
+                    Edit
+                </a>
+
+                <form method="POST"
+                      action="{{ url_for('fulfill_request_post', pid=post.pid) }}">
+                    <button type="submit" class="btn btn-primary">Mark Fulfilled</button>
+                </form>
+
+                <form method="POST"
+                      action="{{ url_for('delete_request', pid=post.pid) }}">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+
+            </div>
+            {% endif %}
+
+        </li>
         {% else %}
             <li>You have no active posts.</li>
         {% endfor %}
     </ul>
 </div>
+
+
 
 <!-- Archieved Posts: Completed, Fulfilled-->
 <div class="profile-section">
@@ -47,9 +102,9 @@
         {% endfor %}
     </ul>
 </div>
-
+<!-- Requested Items and Offers Made -->
 <div class="my_interest_list">
-  <h2>My Requests &amp; Offers</h2>
+  <h2>Requested Items and Offers Made</h2>
   {% if my_interests %}
   <ul class="card-grid">
     {% for i in my_interests %}
@@ -73,16 +128,16 @@
           <h3>{{ i.title }}</h3>
           <p class="card-cats">{{ i.category | category_labels | join(' · ') }}</p>
           <p class="card-meta">Posted by {{ i.poster }} &middot; {{ i.posted_at.strftime('%b %d') }}</p>
-          {% if i.interest_status in ('Pending', 'Accepted') %}
-            <form class="card-actions" method="POST"
-                    action="{{ url_for('cancel_request', pid=i.pid) }}">
-                <button type="submit">
-                {{ 'Cancel Request' if i.post_type == 'Donate' else 'Withdraw Offer' }}
-                </button>
-            </form>
-            {% endif %}
         </div>
       </a>
+      {% if i.interest_status in ('Pending', 'Accepted') %}
+            <form class="card-actions" method="POST"
+                    action="{{ url_for('cancel_request', pid=i.pid) }}">
+                <button type="submit" class="btn btn-danger">
+                    {{ 'Cancel Request' if i.post_type == 'Donate' else 'Withdraw Offer' }}
+                </button>
+            </form>
+        {%endif%}
 
 
     </li>
@@ -109,12 +164,12 @@
                 {% if interest.interest_status == 'Pending' %}
                 <form method="post" style="display:inline"
                     action = "{{url_for('accept_interest', iid = interest.iid)}}">
-                    <button type="submit">Accept</button>
+                    <button type="submit" class="btn btn-primary">Accept</button>
                 </form>
 
                 <form method="post" style="display:inline"
                 action = "{{url_for('decline_interest', iid = interest.iid)}}">
-                <button type="submit">Decline</button>
+                <button type="submit" class="btn btn-danger">Decline</button>
                 </form>
                 {% endif %}
             </li>
@@ -123,7 +178,7 @@
         {% endfor %}
     </ul>
 </div>
-
+<!-- Saved Posts -->
 <div class = "profile-section">
     <h2>Saved Posts</h2>
     <ul>

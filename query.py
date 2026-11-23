@@ -93,6 +93,7 @@ def get_my_interests(conn, uid):
         ''', [uid])
         return curs.fetchall()
 def get_interest_on_my_post(conn, uid):
+    """Returns pending and accepted requests or offers on the user's posts."""
     with dbi.dict_cursor(conn) as curs:
         curs.execute('''
             SELECT i.iid,
@@ -160,28 +161,76 @@ def get_photo(conn, filename):
     ''', [filename])
     return curs.fetchone()
 
-def get_all_active_posts(conn):
-    '''all posts shown in home with newest first.
-    excludes deleted and archived posts'''
-    curs=dbi.dict_cursor(conn)
-    curs.execute('''
-        select p.pid, p.uid, u.username, p.post_type, p.title,
-               p.description, p.category, f.filename as photo_filename,
-               p.status, p.posted_at
-        from posts p join users u using (uid)
-                     left join picfile f using (pid)
-        where p.is_deleted = 0 and p.status not in (%s, %s)
-        order by p.posted_at desc
-    ''', list(ARCHIVED_STATUSES))
+#statuses a post can have while it still shows on Home (used by the filter)
+ACTIVE_STATUSES = ('Available', 'Claimed', 'Open')
+
+
+def search_posts(conn, keyword, post_type, sort):
+    '''gets the home posts from the db matching the search keyword
+    and post type.'''
+    search= '%' + keyword + '%'
+    curs= dbi.dict_cursor(conn)
+    if sort== 'oldest':
+        curs.execute('''
+            select p.pid, p.uid, u.username, p.post_type, p.title,
+                   p.description, p.category, f.filename as photo_filename,
+                   p.status, p.posted_at
+            from posts p join users u using (uid)
+                         left join picfile f using (pid)
+            where p.is_deleted = 0
+              and p.status not in ('Completed', 'Fulfilled')
+              and p.title like %s
+              and (%s = '' or p.post_type = %s)
+            order by p.posted_at asc
+        ''', [search, post_type, post_type])
+    else:
+        curs.execute('''
+            select p.pid, p.uid, u.username, p.post_type, p.title,
+                   p.description, p.category, f.filename as photo_filename,
+                   p.status, p.posted_at
+            from posts p join users u using (uid)
+                         left join picfile f using (pid)
+            where p.is_deleted = 0
+              and p.status not in ('Completed', 'Fulfilled')
+              and p.title like %s
+              and (%s = '' or p.post_type = %s)
+            order by p.posted_at desc
+        ''', [search, post_type, post_type])
     return curs.fetchall()
 
-def get_active_posts(conn):
-    '''same posts as get_all_active_posts but split into donate or request'''
-    donate=[]
-    request=[]
-    for post in get_all_active_posts(conn):
-        (donate if post['post_type']=='Donate' else request).append(post)
-    return donate, request
+
+def filter_by_categories(posts, categories):
+    '''keeps only posts that have at least one of the categories
+    if no categories were chosen then all posts are kept'''
+    if not categories:
+        return posts
+    kept= []
+    for post in posts:
+        post_categories= post['category'].split(',')   
+        for category in categories:
+            if category in post_categories:
+                kept.append(post)
+                break   #already kept this post, no need to check the rest
+    return kept
+
+
+def filter_by_statuses(posts, statuses):
+    '''keeps only posts whose status was chosen-
+    if no statuses were chosen then all posts are kept'''
+    if not statuses:
+        return posts
+    kept= []
+    for post in posts:
+        if post['status'] in statuses:
+            kept.append(post)
+    return kept
+def get_all_active_posts(conn, keyword='', post_type='', categories=[],
+                         statuses=[], sort='newest'):
+    '''returns the posts shown on home after search, filter and sort'''
+    posts = search_posts(conn, keyword, post_type, sort)
+    posts = filter_by_categories(posts, categories)
+    posts = filter_by_statuses(posts, statuses)
+    return posts
 
 def get_post_details(conn, pid):
     '''returns a non-deleted post with its author's username, im assuming we need this later'''
@@ -196,28 +245,72 @@ def get_post_details(conn, pid):
     ''', [pid])
     return curs.fetchone()
 
-def search_posts(conn, keyword):
-    '''searches for posts with the keyword in title'''
-    curs = dbi.dict_cursor(conn)
-    curs.execute('''
-        select p.pid, p.uid, u.username, p.post_type, p.title,
-               p.description, p.category, f.filename as photo_filename,
-               p.status, p.posted_at
-        from posts p join users u using (uid)
-                     left join picfile f using (pid)
-        where p.title like %s
-          and p.is_deleted = 0 and p.status not in (%s, %s)
-        order by p.posted_at desc
-    ''', ['%' + keyword + '%'] + list(ARCHIVED_STATUSES))
-    return curs.fetchall()
-
-def update_post(conn, pid, title, description, categories, photo_filename=None):
-    '''updates a post with a new title, description, categories, and optionally a new photo filename'''
-    curs = dbi.cursor(conn)
-    curs.execute('''
-        update posts
-        set title=%s, description=%s, category=%s, photo_filename=%s
-        where pid=%s and is_deleted=0
-        ''', [title, description, ','.join(categories), photo_filename, pid])
+def update_post(conn, pid, title, description, categories):
+    '''updates a post with a new title, description and categories'''
+    with dbi.cursor(conn) as curs:
+        curs.execute('''
+            update posts
+            set title=%s, description=%s, category=%s
+            where pid = %s and is_deleted = 0''',
+            [title, description, ','.join(categories), pid])
     conn.commit()
-    return
+
+def mark_request_fulfilled(conn, pid):
+    """Marks a Request post as Fulfilled and closes its outstanding offers."""
+    with dbi.cursor(conn) as curs: 
+        curs.execute('''
+        update posts 
+        set status = 'Fulfilled'
+        where pid = %s and post_type = 'Request'
+        and is_deleted = 0''', 
+        [pid])
+
+        curs.execute('''
+        update interests
+        set status = 'Closed'
+        where pid = %s and status in 
+        ('Pending', 'Accepted')''', [pid])
+    conn.commit()
+
+def delete_request_post(conn, pid): 
+    '''Soft deletes a Request post and closess its offers'''
+    with dbi.cursor(conn) as curs:
+        curs.execute('''
+        update posts 
+        set is_deleted = 1
+        where pid=%s and post_type = 'Request'
+        and is_deleted = 0''', 
+        [pid])
+
+        curs.execute('''
+        update interests
+        set status = 'Closed'
+        where pid = %s and status in ('Pending', 'Accepted')
+        ''', [pid])
+    conn.commit()
+
+def is_saved_post(conn, uid, pid):
+    '''checks whether a user has saved a post'''
+    with dbi.dict_cursor(conn) as curs:
+        curs.execute('''select sid from saved_posts
+        where uid = %s and pid=%s''', [uid, pid])
+        return curs.fetchone() is not None
+
+def add_saved_post(conn, uid, pid):
+    '''saves a post if the user hasn't already saved it'''
+    if not is_saved_post(conn, uid, pid):
+        with dbi.cursor(conn) as curs:
+            curs.execute('''
+                insert into saved_posts (uid, pid)
+                values (%s, %s)
+            ''', [uid, pid])
+        conn.commit()
+
+def remove_saved_post(conn, uid, pid):
+    '''removes a post from the user's saved posts'''
+    with dbi.cursor(conn) as curs: 
+        curs.execute(''' 
+        delete from saved_posts
+        where uid=%s and pid=%s''', 
+        [uid, pid])
+    conn.commit()

@@ -2,25 +2,73 @@
 
 {% block main_content %}
 <header class="home-hero">
-  <h1>Wellesley Free Finds</h1>
-  <p>Browse free items from your campus community, or see what others are looking for.</p>
+  <div>
+    <h1>Honk if you like free stuff.</h1>
+    <p>One student's clutter is another student's dorm haul. 
+       Grab something, give something, or ask the sibs for help.</p> {#I came up with this line, but if it feels cheesy, 
+        we can just use the second part!#}
+  </div>
+  <img src="{{ url_for('static', filename='goose-logo.svg') }}" alt="" class="hero-goose">
 </header>
 
-{# our search form #}
-<form class="search-bar" method="get" action="">
-  <label for="search-keyword" class="sr-only">Search posts</label>
-  <input
-    id="search-keyword"
-    type="search"
-    name="keyword"
-    value="{{ keyword | default('') }}"
-    placeholder="Search for items...">
-  <button type="submit" class="pink-btn">Search</button>
-  {% if keyword %}
-    <a href="{{ url_for(request.endpoint) }}" class="button">Clear</a>
-  {% endif %}
-</form>
+{# search + filter + sort bar thing, using get since we need it to be in url #}
+<form class="filter-bar" id="filter-bar" method="get" action="{{ url_for('home') }}">
+  <div class="filter-row">
+    <label for="search-keyword" class="sr-only">Search posts</label>
+    <input id="search-keyword" type="search" name="keyword"
+           value="{{ filters.keyword }}" placeholder="Search for a textbook, a fridge, an expensive winter coat...">
+    <button type="submit" class="pink-btn">Search</button>
+  </div>
 
+  <div class="filter-row">
+    <label class="filter-select">Type
+      <select name="post_type">
+        <option value="">All posts</option>
+        <option value="Donate" {% if filters.post_type == 'Donate' %}selected{% endif %}>Donations</option>
+        <option value="Request" {% if filters.post_type == 'Request' %}selected{% endif %}>Requests</option>
+      </select>
+    </label>
+    <label class="filter-select">Sort
+      <select name="sort">
+        <option value="newest">Newest first</option>
+        <option value="oldest" {% if filters.sort == 'oldest' %}selected{% endif %}>Oldest first</option>
+      </select>
+    </label>
+  </div>
+
+  <fieldset class="filter-group">
+    <legend>Status</legend>
+    <div class="chip-picker">
+      {% for st in active_statuses %}
+      <label class="chip-option">
+        <input type="checkbox" name="status" value="{{ st }}"
+               {% if st in filters.statuses %}checked{% endif %}>
+        <span>{{ st }}</span>
+      </label>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <fieldset class="filter-group">
+    <legend>Categories</legend>
+    <div class="chip-picker">
+      {% for value, label in categories.items() %}
+      <label class="chip-option">
+        <input type="checkbox" name="category" value="{{ value }}"
+               {% if value in filters.categories %}checked{% endif %}>
+        <span>{{ label }}</span>
+      </label>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <div class="filter-actions">
+    <button type="submit" class="pink-btn" id="apply-filters">Apply filters</button>
+    {% if filtering or filters.sort == 'oldest' %}
+      <a href="{{ url_for('home') }}" class="clear-link">Clear all</a>
+    {% endif %}
+  </div>
+</form>
 
 <section class="listing">
   <p class="count">{{ posts | length }} item{{ '' if posts | length == 1 else 's' }}</p>
@@ -36,7 +84,7 @@
             <img src="{{ url_for('uploaded_photo', filename=p.photo_filename) }}"
                  alt="Photo of {{ p.title }}" loading="lazy">
           {% else %}
-            <span class="no-photo">No photo :C </span>
+            <span class="no-photo">No photo, just vibes</span>
           {% endif %}
         </div>
         <div class="card-body">
@@ -53,9 +101,22 @@
     {% endfor %}
   </ul>
   {% else %}
-  {# if nothing showed up in the search, or if there are no posts at all, both should not show up #}
-    <p class="empty">Nothing has been posted yet.</p>
+    {% if filtering %}
+      <p class="empty">No posts match that. Even the geese looked everywhere. <a href="{{ url_for('home') }}">Clear all</a></p>
+    {% else %}
+      <p class="empty">Nothing here yet. The geese took everything. Be the first to post!</p>
+    {% endif %}
     
   {% endif %}
 </section>
+{% endblock %}
+
+{% block end_scripts %}
+<script>
+// apply filters right away when a dropdown or chip changes
+$('#filter-bar select, #filter-bar input[type=checkbox]').on('change', function () {
+    $('#filter-bar').submit();
+});
+$('#apply-filters').hide();
+</script>
 {% endblock %}

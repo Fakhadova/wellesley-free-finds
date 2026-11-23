@@ -30,6 +30,14 @@
   {% elif post.uid == uid %}
     <p><em>This is your post.</em></p>
 
+    {% if post.post_type == 'Request' and post.status == 'Open' %}
+        <p>
+            <a href="{{ url_for('edit_post', pid=post.pid) }}">
+                Edit Post
+            </a>
+        </p>
+    {% endif %}
+
   {% elif interest and interest.status in ('Pending', 'Accepted') %}
     <p>
       {% if interest.status == 'Accepted' %}
@@ -41,7 +49,7 @@
     <form method="POST" action="{{ url_for('cancel_request', pid=post.pid) }}">
       <button type="submit">{{ 'Cancel Request' if is_donate else 'Withdraw Offer' }}</button>
     </form>
-
+  
   {% elif post.status not in ('Available', 'Open') %}
     <p><em>This post is not accepting {{ 'requests' if is_donate else 'offers' }} right now.</em></p>
 
@@ -50,6 +58,22 @@
       <button type="submit">{{ 'Request Item' if is_donate else 'I Have This' }}</button>
     </form>
   {% endif %}
-  {# ============ end of Request Item / I Have This buttons ============ #}
+
+
+{# Save or unsave the current post #}
+{% if uid and post.uid != uid %}
+{% if is_saved %}
+    <form method="POST"
+          action="{{ url_for('unsave_post', pid=post.pid) }}">
+        <button type="submit">Unsave Post</button>
+    </form>
+{% else %}
+    <form method="POST"
+          action="{{ url_for('save_post', pid=post.pid) }}">
+        <button type="submit">Save Post</button>
+    </form>
+{% endif %}
+{% endif %}
+
 </article>
 {% endblock %}

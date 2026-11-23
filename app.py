@@ -6,7 +6,6 @@ import os
 import cs304dbi as dbi
 import pymysql
 import secrets
-app.secret_key = secrets.token_hex()
 
 from pwd_context import hash_password, verify_password
 from werkzeug.utils import secure_filename
@@ -26,9 +25,11 @@ app.config['MAX_CONTENT_LENGTH']=5 * 1024 * 1024
 
 @app.route('/')
 def index():
-    with dbi.connect() as conn:
-        donate_posts,request_posts=get_active_posts(conn) #shows posts on the front page
-    return render_template('main.html', page_title='Main Page', donate_posts=donate_posts, request_posts=request_posts)
+    '''Displays the login page or redirects logged-in users to Home'''
+    #making sure log-ined users are sent to home
+    if session.get('uid'):
+        return redirect(url_for('home'))
+    return render_template('main.html', page_title='Main Page')
 
 
 @app.route('/register/', methods=["POST"])
@@ -38,7 +39,7 @@ def register():
     passwd1 = request.form.get('password1', '')
     passwd2 = request.form.get('password2', '')
     if not username or len(username) > 20:
-        flash('Username is required (max 20 characters).)')
+        flash('Username is required (max 20 characters).')
         return redirect(url_for('index'))
     if not passwd1:
         flash('Password is required.')
@@ -58,8 +59,9 @@ def register():
                                 VALUES(null,%s,%s)''',
                                 [username, hashed])
                 conn.commit()
-            except pymysql.IntegrityError as err:
-                flash(f'Username taken: {err}')
+            except pymysql.IntegrityError:
+                #has to make sure the raw error doesn't show 
+                flash('That username is taken. Please choose another one.')
                 return redirect(url_for('index'))
             uid = curs.lastrowid
             session.clear()
@@ -68,10 +70,11 @@ def register():
             session['logged_in'] = True
             session['visits'] = 1
             flash("Account created successfully.")
-            return redirect(url_for('index'))
+            return redirect(url_for('home'))
 
 @app.route('/login/', methods=["POST"])
 def login():
+    """Authenticates a user and stores their information in the session."""
     username = request.form.get('username', '').strip()
     passwd = request.form.get('password', '')
     # should use a helper function
@@ -109,10 +112,23 @@ def login():
 
 @app.route('/home/', endpoint='home')
 def home():
-    keyword = request.args.get('keyword', '').strip() #keyword is the search term the user puts in
+    #search and filter functionality for the home page
+    filters= {
+        'keyword': request.args.get('keyword', '').strip(), #our search term
+        'post_type': request.args.get('post_type', ''),
+        'categories': request.args.getlist('category'),
+        'statuses': request.args.getlist('status'),
+        'sort': request.args.get('sort', 'newest'),
+    }
     with dbi.connect() as conn:
-        posts=get_all_active_posts(conn) and search_posts(conn, keyword)
-    return render_template('home.html', page_title='Home Page', posts=posts, keyword=keyword)
+        posts= get_all_active_posts(conn, **filters)
+    #making this true if the user used search or filter so the "clear" button shows up
+    filtering= bool(filters['keyword'] or filters['post_type']
+                     or filters['categories'] or filters['statuses'])
+    return render_template('home.html', page_title='Home Page',
+                       posts=posts, filters=filters,
+                       filtering=filtering, categories=CATEGORIES,
+                       active_statuses=ACTIVE_STATUSES)
 
 @app.route('/user/<username>')
 def user(username=None):
@@ -128,13 +144,14 @@ def user(username=None):
         #                        uid=uid,
         #                        visits=session['visits'])
 
-        return render_template('home.html', page_title='Home Page')
+        return redirect(url_for('home'))
     else:
         flash('you are not logged in. Please login or join')
         return redirect( url_for('index') )
 
 @app.route('/logout/', methods=['POST'])
 def logout():
+    """Logs out the current user by clearing their session."""
     if 'username' in session:
         username = session['username']
         session.clear()         # this pops all values
@@ -161,8 +178,12 @@ def make_request(pid):
         elif post['status'] not in ('Available', 'Open'):
             flash('This post is not available')
         else:
-            add_request(conn, sid, pid, 'Pending')
-            flash('request sent')
+            existing = get_interest_bypid(conn, pid, sid)
+            if existing and existing['status'] in ('Pending', 'Accepted'):
+                flash('You already have an active request or offer.')
+            else:
+                add_request(conn, sid, pid, 'Pending')
+                flash('Request or offer sent.')
         return redirect(url_for('post_detail', pid=pid))
 
 @app.route('/post/<int:pid>/cancel/', methods=['POST'])
@@ -170,13 +191,13 @@ def cancel_request(pid):
     uid = session.get('uid')
     if not uid:
         flash('please login first')
-        return redirect(url_for('login'))
+        return redirect(url_for('index'))
     with dbi.connect() as conn:
         post = get_post_details(conn, pid)
         if post is None:
             flash("Post doesn't exist")
             return redirect(url_for('index'))
-        #user trying to cancell request on their own post
+        #user trying to cancel request on their own post
         if post['uid'] == uid:
             flash("You can't cancel request to your own post")
             return redirect(url_for('index'))
@@ -208,6 +229,7 @@ def accept_interest(iid):
         interest = get_interest_byiid(conn, iid)
         if not interest:
             flash("This request doesn't exist")
+            return redirect(url_for('profile', username=username))
         if interest['status']!='Pending':
             flash('you cannot accept this interest')
             return redirect(url_for('profile', username=username))
@@ -221,7 +243,10 @@ def accept_interest(iid):
             return redirect(url_for('profile', username=username))
         else:
             accept_request(conn, iid)
-            change_post_status(conn, interest['pid'], 'Claimed')
+            #only donate posts become claimed;request posts stay open
+            #until the requester marks them fulfilled
+            if post['post_type']== 'Donate':
+                change_post_status(conn, interest['pid'], 'Claimed')
             flash('Accepted the interest')
         return redirect(url_for('profile', username=username))
 
@@ -231,23 +256,29 @@ def decline_interest(iid):
     uid = session.get('uid')
     if not username:
         flash('please log in first')
-        redirect(url_for('index'))
+        return redirect(url_for('index'))
     with dbi.connect() as conn:
         interest = get_interest_byiid(conn, iid)
         if not interest:
             flash("This request doesn't exist")
+            return redirect(url_for('profile', username=username))
         post = get_post_details(conn, interest['pid'])
         #someone else is trying to accept a request
-        if post['uid']!=uid:
-            flash("You cannot accept interest on someone else's post")
-            return redirect(url_for('post', pid=interest['pid']))
-        else:
-            decline_request(conn, iid)
+        if post is None or post['uid']!=uid:
+            flash("You cannot decline interest on someone else's post")
+            return redirect(url_for('profile', username = username))
+        if interest['status'] != 'Pending':
+            flash('This interest cannot be declined.')
+            return redirect(url_for('profile', username=username))
+
+        decline_request(conn, iid)
+        flash('Interest declined.')
         return redirect(url_for('profile', username=username))
 
 @app.route('/profile/<username>')
 # Profile (Team Member 1): Display the current user's Donate and Request posts in Profile.
 def profile(username):
+    """Displays the user's active, archived, and saved posts, along with their requests and offers."""
     if 'username' not in session or session['username'] != username:
         flash('You are not authorized to view this profile.')
         return redirect(url_for('index'))
@@ -256,11 +287,21 @@ def profile(username):
     # Fetch the user's donate and request posts from the database
     with dbi.connect() as conn:
         with dbi.dict_cursor(conn) as curs:
-            curs.execute('''SELECT * FROM posts WHERE uid = %s''', [uid])
-            posts = curs.fetchall()
-            curs.execute('''SELECT * from posts where uid = %s and is_deleted = 0 and status not in ('Completed', 'Fulfilled')
-            order by posted_at desc''', [uid])
+            curs.execute('''SELECT p.pid, p.uid, p.post_type, p.title,
+            p.description, p.category, p.status, p.posted_at,
+            u.username, f.filename AS photo_filename
+            FROM posts p
+            JOIN users u ON p.uid = u.uid
+            LEFT JOIN picfile f ON p.pid = f.pid
+            WHERE p.uid = %s
+            AND p.is_deleted = 0
+            AND p.status NOT IN ('Completed', 'Fulfilled')
+            ORDER BY p.posted_at DESC''', [uid])
             active_posts = curs.fetchall()
+
+
+
+
             curs.execute('''SELECT * from posts where uid = %s and is_deleted = 0 and status in ('Completed', 'Fulfilled')
             order by posted_at desc''', [uid])
             archived_posts = curs.fetchall()
@@ -366,56 +407,86 @@ def post_detail(pid):
             flash("That post doesn't exist.")
             return redirect(url_for('index'))
         interest = get_interest_bypid(conn, pid, uid) if uid else None
+        is_saved = is_saved_post(conn, uid, pid) if uid else False
     return render_template('post_detail.html', page_title=p['title'],
-                           post=p, uid=uid, interest=interest)
+                           post=p, uid=uid, interest=interest, is_saved = is_saved)
 
 
-# Request Post Management: Allow owners to edit, delete, or mark Request posts as Fulfilled. Move Fulfilled posts to the owner's archive and close outstanding offers. Maybe take them to edit_post_detail.html? with sessions though?
-#@app.route('/post/<int:pid>/edit/', methods = ['GET', 'POST'])
-#def edit_post(pid):
+
 @app.route('/post/<int:pid>/edit/', methods = ['GET', 'POST'])
-#Edit post from profile page - Allow owners to edit, delete, mark request posts as fufilled from their own posts from the active posts listed in their profile. Move fulfilled posts to the owner's archive and close outstanding offers.
 def edit_post(pid):
+    """Allows the owner to edit an Open Request post."""
     uid = session.get('uid')
     if not uid:
         flash('Please log in to edit your post.')
         return redirect(url_for('index'))
     with dbi.connect() as conn:
         post = get_post_details(conn, pid)
+        
         if post is None:
             flash("That post doesn't exist.")
             return redirect(url_for('index'))
+
         if post['uid'] != uid:
             flash("You are not authorized to edit this post.")
             return redirect(url_for('index'))
+
+        if post['post_type'] != 'Request':
+            flash("Donate post editing is not available yet.")
+            return redirect(url_for('post_detail', pid=pid))
+        
+        if post['status'] != 'Open':
+            flash('This post cannot be edited.')
+            return redirect(url_for('post_detail', pid=pid))
+
         if request.method == 'GET':
-            return render_template('edit_post.html', page_title = 'Edit Post', post = post, categories = CATEGORIES)
-        #option stuff for editing
+            return render_template(
+                'edit_post.html',
+                page_title = 'Edit Post',
+                post = post,
+                categories = CATEGORIES,
+                form = {},
+                chosen = post['category'].split(','))
+        
+        #Get the submitted form values
         form = request.form
         title = form.get('title', '').strip()
         description = form.get('description', '').strip()
         categories = [c for c in form.getlist('category') if c in CATEGORIES]
+        photo = request.files.get('photo')
         errors = []
+        
         if not title or len(title) > 100:
             errors.append('Item name is required (max 100 characters).')
+        
         if not description or len(description) > 500:
             errors.append('Description is required (max 500 characters).')
+        
         if not categories:
             errors.append('Choose at least one category.')
+        
+        #A new photo is optional
+        ext = None
+        try: 
+            ext = photo_extension(photo)
+        except ValueError as err:
+            errors.append(str(err))
+
         if errors:
-            for e in errors:
-                flash(e)
-                return render_template('edit_post.html', page_title = 'Edit Post', post = post, categories = CATEGORIES)
-        #update post in database
+            for error in errors:
+                flash(error)
+            return render_template('edit_post.html', page_title = 'Edit Post', 
+            post = post, categories = CATEGORIES, form = form, chosen = categories)
+
+        #Update the post's text info 
+
         update_post(conn, pid, title, description, categories)
-        flash('Your post has been updated.')
+
+        #replace the photo only if new one is uploaded
+        if ext: 
+            save_photo(conn, pid, photo, ext)
+    flash('Your post has been updated.')
     return redirect(url_for('post_detail', pid = pid))
-
-
-
-
-
-
 
 @app.route('/uploads/<filename>')
 def uploaded_photo(filename):
@@ -425,6 +496,83 @@ def uploaded_photo(filename):
     if row is None:
         abort(404)
     return Response(row['photo'], mimetype=row['mimetype'])
+
+@app.route('/post/<int:pid>/fulfill/', methods = ['POST'])
+def fulfill_request_post(pid):
+    """Marks an Open Request post as Fulfilled and closes outstanding offers."""
+    uid = session.get('uid')
+    if not uid: 
+        flash('Please log in first.')
+        return redirect(url_for('index'))
+    with dbi.connect() as conn: 
+        post = get_post_details(conn, pid)
+        if post is None: 
+            abort(404)
+        if post['uid'] != uid or post['post_type'] != 'Request':
+            abort(403)
+        
+        if post['status'] != 'Open':
+            flash('This post cannot be marked fulfilled.')
+            return redirect(url_for('post_detail', pid = pid))
+
+        mark_request_fulfilled(conn, pid) 
+    flash("Your request post has been marked fulfilled.")
+    return redirect(url_for('profile', username=session['username']))
+
+@app.route('/post/<int:pid>/delete/', methods = ['POST'])
+def delete_request(pid):
+    """Deletes a Request post and closes its outstanding offers."""
+    uid= session.get('uid')
+    if not uid: 
+        flash('Please log in first.')
+        return redirect (url_for('index'))
+    
+    with dbi.connect() as conn: 
+        post = get_post_details(conn, pid)
+
+        if post is None: 
+            abort(404)
+        
+        if post['uid'] != uid or post['post_type'] != 'Request':
+            abort(403)
+        
+        delete_request_post(conn, pid)
+    
+    flash('Your post has been deleted.')
+    return redirect(url_for('profile', username = session['username']))
+
+@app.route('/post/<int:pid>/save/', methods = ['POST'])
+def save_post(pid):
+    """Saves a post to the current user's saved posts."""
+    uid = session.get('uid')
+    if not uid: 
+        flash("Please log in first.")
+        return redirect(url_for('index'))
+    
+    with dbi.connect() as conn: 
+        post = get_post_details(conn, pid)
+        if post is None: 
+            abort(404)
+
+        add_saved_post(conn, uid, pid)
+
+        flash("Post saved.")
+        return redirect(url_for('post_detail', pid = pid))
+
+
+@app.route('/post/<int:pid>/unsave/', methods=['POST'])
+def unsave_post(pid):
+    """Removes a post from the current user's saved posts."""
+    uid = session.get('uid')
+    if not uid:
+        flash('Please log in first.')
+        return redirect(url_for('index'))
+
+    with dbi.connect() as conn:
+        remove_saved_post(conn, uid, pid)
+
+    flash('Post removed from saved items.')
+    return redirect(url_for('post_detail', pid=pid))
 
 if __name__ == '__main__':
     import sys, os

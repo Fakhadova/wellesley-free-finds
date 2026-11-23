@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Wellesley Free Finds goose logo">
+  <!-- Wellesley Free Finds logo: a Canada goose floating on Lake Waban -->
+  <defs>
+    <clipPath id="circle">
+      <circle cx="50" cy="50" r="45"/>
+    </clipPath>
+  </defs>
+
+  <!-- cream badge with a Wellesley blue ring -->
+  <circle cx="50" cy="50" r="45" fill="#fbf7ee"/>
+
+  <g clip-path="url(#circle)">
+    <!-- lake -->
+    <path d="M0 74 Q12 70 25 74 T50 74 T75 74 T100 74 V100 H0 Z" fill="#9cc3ea"/>
+    <path d="M10 82 Q18 79 26 82 M58 86 Q66 83 74 86" stroke="#ffffff" stroke-width="2"
+          fill="none" stroke-linecap="round"/>
+
+    <!-- tail -->
+    <path d="M76 60 L90 54 L84 67 Z" fill="#2b2b2b"/>
+    <!-- body -->
+    <ellipse cx="58" cy="65" rx="24" ry="12.5" fill="#8b7355"/>
+    <!-- wing -->
+    <path d="M50 61 Q66 52 82 61 Q68 71 52 68 Z" fill="#6b5640"/>
+    <path d="M58 62 Q68 58 76 62" stroke="#d9cbb3" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <!-- long black neck -->
+    <path d="M39 60 C35 49 33 39 37 29" stroke="#1f1f1f" stroke-width="9"
+          fill="none" stroke-linecap="round"/>
+    <!-- light chest -->
+    <ellipse cx="41" cy="65" rx="11" ry="10" fill="#e6dac5"/>
+    <!-- head -->
+    <ellipse cx="40" cy="26" rx="8.5" ry="7" fill="#1f1f1f"/>
+    <!-- white chinstrap, the classic Canada goose cheek patch -->
+    <path d="M35 27 Q37 33 43 31 Q41 27 35 27 Z" fill="#ffffff"/>
+    <!-- beak (a little orange, for personality) -->
+    <path d="M47 23.5 L57 26 L47 29 Z" fill="#f28c28"/>
+    <!-- eye with a sparkle -->
+    <circle cx="42.5" cy="23.5" r="1.8" fill="#ffffff"/>
+    <circle cx="43" cy="23.6" r="0.9" fill="#1f1f1f"/>
+  </g>
+
+  <circle cx="50" cy="50" r="45" fill="none" stroke="#002776" stroke-width="6"/>
+</svg>
