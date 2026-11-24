@@ -61,7 +61,6 @@ def withdraw_interest(conn, iid):
             set status='Withdrawn'
             where iid=%s
         ''',[iid])
-        conn.commit()
     return
 
 def change_post_status(conn, pid, status):
