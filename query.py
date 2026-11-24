@@ -142,7 +142,7 @@ def add_post(conn, uid, post_type, title, description, categories):
     return curs.lastrowid
 
 def add_photo(conn, pid, filename, mimetype, data):
-    '''stores a post's photo (the image bytes themselves) in picfile.
+    '''stores a post's photo in picfile table
     one photo per post; storing it in the shared DB means everyone sees it'''
     curs=dbi.cursor(conn)
     curs.execute('''
@@ -215,7 +215,7 @@ def filter_by_categories(posts, categories):
 
 
 def filter_by_statuses(posts, statuses):
-    '''keeps only posts whose status was chosen-
+    '''keeps only posts whose status was chosen.
     if no statuses were chosen then all posts are kept'''
     if not statuses:
         return posts

@@ -77,7 +77,6 @@ def login():
     """Authenticates a user and stores their information in the session."""
     username = request.form.get('username', '').strip()
     passwd = request.form.get('password', '')
-    # should use a helper function
     with dbi.connect() as conn:
         with dbi.dict_cursor(conn) as curs:
             curs.execute('''SELECT uid,password_hash
@@ -112,7 +111,7 @@ def login():
 
 @app.route('/home/', endpoint='home')
 def home():
-    #search and filter functionality for the home page
+    '''search and filter functionality for the home page'''
     filters= {
         'keyword': request.args.get('keyword', '').strip(), #our search term
         'post_type': request.args.get('post_type', ''),
@@ -138,12 +137,6 @@ def user(username=None):
         username = session['username']
         uid = session['uid']
         session['visits'] = 1+int(session.get('visits',0))
-        # return render_template('greet.html',
-        #                        page_title=f'My App: Welcome {username}',
-        #                        name=username,
-        #                        uid=uid,
-        #                        visits=session['visits'])
-
         return redirect(url_for('home'))
     else:
         flash('you are not logged in. Please login or join')
@@ -163,13 +156,14 @@ def logout():
 
 @app.route('/post/<int:pid>/make_request/', methods=['POST'])
 def make_request(pid):
+    '''Handles a user making a request or offer on a post. Validates the request and updates the database accordingly.'''
     sid = session.get('uid')
     if not sid:
         flash('Please login first')
         return redirect(url_for('index'))
 
     with dbi.connect() as conn:
-        post = get_post_details(conn, pid) #whatever you use to find a post based on pid
+        post = get_post_details(conn, pid) #get the details of the post they are trying to make a request on
         if post is None:
             flash("Post doesn't exist")
             return redirect(url_for('index'))
@@ -188,6 +182,7 @@ def make_request(pid):
 
 @app.route('/post/<int:pid>/cancel/', methods=['POST'])
 def cancel_request(pid):
+    '''Handles a user canceling their request or offer on a post. Validates the cancellation and updates the database accordingly.'''
     uid = session.get('uid')
     if not uid:
         flash('please login first')
@@ -223,6 +218,7 @@ def cancel_request(pid):
 
 @app.route('/profile/interest_list/<int:iid>/accept', methods=['POST'])
 def accept_interest(iid):
+    '''Handles a user accepting a request or offer on their post. Validates the acceptance and updates the database accordingly.'''
     username = session.get('username')
     uid = session.get('uid')
     if not username:
@@ -254,8 +250,9 @@ def accept_interest(iid):
             conn.commit()
         return redirect(url_for('profile', username=username))
 
-@app.route('/profile/interest_list/<int:iid>/decline', methods=['POST'])#what is the endpoint of this?
+@app.route('/profile/interest_list/<int:iid>/decline', methods=['POST'])
 def decline_interest(iid):
+    '''Handles a user declining a request or offer on their post. Validates the decline and updates the database accordingly.'''
     username = session.get('username')
     uid = session.get('uid')
     if not username:
@@ -280,7 +277,7 @@ def decline_interest(iid):
         return redirect(url_for('profile', username=username))
 
 @app.route('/profile/<username>')
-# Profile (Team Member 1): Display the current user's Donate and Request posts in Profile.
+
 def profile(username):
     """Displays the user's active, archived, and saved posts, along with their requests and offers."""
     if 'username' not in session or session['username'] != username:
@@ -303,17 +300,19 @@ def profile(username):
             ORDER BY p.posted_at DESC''', [uid])
             active_posts = curs.fetchall()
 
-
-
-
-            curs.execute('''SELECT * from posts where uid = %s and is_deleted = 0 and status in ('Completed', 'Fulfilled')
+            curs.execute('''SELECT * from posts where uid = %s and is_deleted = 0 
+            and status in ('Completed', 'Fulfilled')
             order by posted_at desc''', [uid])
             archived_posts = curs.fetchall()
-            curs.execute('''SELECT posts.* from posts join saved_posts on posts.pid = saved_posts.pid where saved_posts.uid = %s and posts.is_deleted = 0 order by saved_posts.sid desc''', [uid])
+            curs.execute('''SELECT posts.* from posts join saved_posts 
+            on posts.pid = saved_posts.pid where saved_posts.uid = %s 
+            and posts.is_deleted = 0 order by saved_posts.sid desc''', [uid])
             saved_posts = curs.fetchall()
             interests = get_interest_on_my_post(conn, uid)
             my_interests = get_my_interests(conn, uid)
-    return render_template('profile.html', page_title = f"{username}'s Profile", active_posts = active_posts, archived_posts = archived_posts, saved_posts = saved_posts, interests = interests, my_interests = my_interests)
+    return render_template('profile.html', page_title = f"{username}'s Profile", active_posts = active_posts, 
+                           archived_posts = archived_posts, saved_posts = saved_posts, interests = interests, 
+                           my_interests = my_interests)
 
 
 # Donate Listings & Request Posts Code
@@ -368,9 +367,7 @@ def post():
     description=form.get('description', '').strip()
     categories=[c for c in form.getlist('category') if c in CATEGORIES]
     photo=request.files.get('photo')
-    errors = [] #copilot randomly added these so we have to check but they seem to be used for form validation
-    if post_type not in INITIAL_STATUS:
-        errors.append('Choose Donate or Request.')
+    errors = [] #form validation errors
     if not title or len(title) > 100:
         errors.append('Item name is required (max 100 characters).')
     if not description or len(description) > 500:
@@ -382,7 +379,7 @@ def post():
     ext=None
     if not errors:
         try:
-            ext=photo_extension(photo) #check the photo type BEFORE creating the post
+            ext=photo_extension(photo) #check the photo type before creating the post
         except ValueError as err:
             errors.append(str(err))
     if errors:
@@ -398,7 +395,7 @@ def post():
         if ext:
             save_photo(conn, pid, photo, ext) #photo is named after the pid, so it's saved after the post
     flash(f'Your {post_type.lower()} post was created!')
-    return redirect(url_for('post_detail', pid=pid)) #i'm thinking like in the movies, we redirect to their new post page
+    return redirect(url_for('post_detail', pid=pid))
 
 
 @app.route('/post/<int:pid>/')
