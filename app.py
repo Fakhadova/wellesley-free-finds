@@ -212,13 +212,16 @@ def cancel_request(pid):
             flash("You cannot cancel someone else's request")
             return redirect(url_for('post_detail', pid=pid))
         #withdraw interest
-        withdraw_interest(conn, interest['iid'])
+        print('CANCEL DEBUG:', interest['status'], post['status'], post['post_type'])
         if interest['status'] == 'Accepted' and post['status'] == 'Claimed':
+            print('it is working')
             change_post_status(conn, pid, 'Available')
+        withdraw_interest(conn, interest['iid'])
+        conn.commit()
         flash("Your request was withdrawn")
         return redirect(url_for('post_detail', pid=pid))
 
-@app.route('/profile/interest_list/<int:iid>/accept', methods=['POST'])#what is the endpoint of this?
+@app.route('/profile/interest_list/<int:iid>/accept', methods=['POST'])
 def accept_interest(iid):
     username = session.get('username')
     uid = session.get('uid')
